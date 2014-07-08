@@ -4,10 +4,7 @@ using namespace std;
 const int numPieces=12;
 Chessboard::Chessboard(){
 	char chars[numPieces]={'P','R','N','B','Q','K','p','r','n','b','q','k'};
-	boards=new Bitboard*[numPieces];
-	for(int i=0;i<numPieces;i++){
-		boards[i]=new Bitboard(chars[i]);
-	}
+	board=new Bitboard();
 	startPosition();
 }
 void Chessboard::startPosition(){
@@ -46,22 +43,10 @@ bool Chessboard::move(move_t m){
 bool Chessboard::takeBack(){
 }
 string Chessboard::tostring() const{
-	bool occupied;
 	string s="";
 	for(int j=7;j>=0;j--){
 		for(int i=0;i<8;i++){
-			occupied=false;
-			for(int k=0;k<numPieces;k++){
-				//cout<<boards[k]->isOccupied(i,j);
-				if(boards[k]->isOccupied(i,j)){
-					occupied=true;
-					s.push_back(boards[k]->getPiece());
-				}
-			}
-			//cout<<endl;
-			if(!occupied){
-				s.push_back('_');
-			}
+			s.push_back(piece(i,j));
 			s.push_back(' ');
 		}
 		s.push_back('\n');
