@@ -33,10 +33,10 @@ int Bitboard::deoccupy(uint x, uint y){
 	squares&=(((long long)1<<y)<<(x*CHAR_BIT)^(~(long long)0));
 	return 1;
 }
-Bitboard* knightSet(){
+Bitboard* Bitboard::knightSet(){
 	long long newSquares=0;
 	Bitboard* newSet=new Bitboard(piece);
-	int moveSquares[4]={6,10,15,17}
+	int moveSquares[4]={6,10,15,17};
 	for(int i=0;i<4;i++){
 		newSquares|=squares<<moveSquares[i];
 		newSquares|=squares>>moveSquares[i];
@@ -44,11 +44,38 @@ Bitboard* knightSet(){
 	newSet->setSquares(newSquares);
 	return newSet;
 }
-Bitboard* pawnSet(){
-
+Bitboard* Bitboard::pawnSet(){
+	Bitboard* newSet=new Bitboard(piece);
+	long long newSquares=0;
+	if(piece=='P'){
+		long long mask=(((long long)1)<<3);
+		for(int i=0;i<7;i++){
+			mask<<=CHAR_BIT;
+			mask|=1;
+		}
+		newSquares|=squares<<1;
+		newSquares|=squares<<(1+CHAR_BIT);
+		newSquares|=squares<<(1-CHAR_BIT);
+		newSquares|=(squares<<2)&mask;
+	}
+	else{
+		long long mask=(((long long)1)<<4);
+		for(int i=0;i<7;i++){
+			mask<<=CHAR_BIT;
+			mask|=1;
+		}
+		newSquares|=squares>>1;
+		newSquares|=squares>>(1+CHAR_BIT);
+		newSquares|=squares>>(1-CHAR_BIT);
+		newSquares|=(squares>>2)&mask;
+	}
+	newSet->setSquares(newSquares);
+	return newSet;
 }
 Bitboard* kingSet(){
-
+	Bitboard* newSet=new Bitboard(piece);
+	long long newSquares=0;
+	
 }
 Bitboard* rookSet(){
 

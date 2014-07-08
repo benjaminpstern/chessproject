@@ -3,6 +3,7 @@
 using namespace std;
 int main(){
 	Chessboard* board=new Chessboard();
-	cout<< board<<endl;
+	cout<< board;
+	delete board;
 	return 0;
 }
