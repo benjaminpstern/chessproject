@@ -60,25 +60,34 @@ int Bitboard::deoccupy(int index, uint x, uint y){
 	bitbrds[index]&=(((int64_t)1<<y)<<(x*CHAR_BIT)^(~(int64_t)0));
 	return 1;
 }
-int64_t Bitboard::knightSet(int index){
+//returns 0 if index is between 0
+//and 5 and if index is between 6 and 11
+//returns 6
+int myPieces(int index){
+	return (index/6)*6;
+}
+int otherPieces(int index){
+	return myPieces((index+6)%12);
+}
+int64_t knightSet(int64_t brd,int blackOrWhite){
 	int64_t newSquares=0;
 	int moveSquares[4]={6,10,15,17};
 	for(int i=0;i<4;i++){
-		newSquares|=bitbrds[index]<<moveSquares[i];
-		newSquares|=bitbrds[index]>>moveSquares[i];
+		newSquares|=brd<<moveSquares[i];
+		newSquares|=brd>>moveSquares[i];
 	}
 	//this loop goes through all pieces of the same color as this piece
 	//and turns off places where the knight would be taking its own piece.
-	for(i=(index/6)*6;i<(index/6)*6+6;i++){
-		newSquares&=~bitbrds[index];
+	for(i=myPieces(blackOrWhite);i<myPieces(blackOrWhite)+6;i++){
+		newSquares&=~bitbrds[i];
 	}
 	return newSquares;
 }
-int64_t Bitboard::pawnSet(int index){
+int64_t pawnSet(int64_t brd, int blackOrWhite){
 	int64_t pushSquares=0;//the squares where the pawn would be pushing
 	int64_t takeSquares=0;//the squares where the pawn would be taking
 	int forward=1;
-	if(index>5){
+	if(blackOrWhite>5){
 		forward=-1;
 	}
 	int64_t mask=(((int64_t)1)<<3);
@@ -88,38 +97,55 @@ int64_t Bitboard::pawnSet(int index){
 		mask<<=CHAR_BIT;
 		mask|=1;
 	}
-	pushSquares|=bitbrds[index]<<forward;
-	takeSquares|=bitbrds[index]<<(forward+CHAR_BIT);
-	takeSquares|=bitbrds[index]<<(forward-CHAR_BIT);
-	pushSquares|=(bitbrds[index]<<2*forward)&mask;
-	for(int i=0;i<num_piece_types;i++){
-		pushSquares&=(~bitbrds[index]);
+	if(forward==1){
+		pushSquares|=brd<<1;
+		takeSquares|=brd<<(1+CHAR_BIT);
+		takeSquares|=brd>>(CHAR_BIT-1);
+		pushSquares|=(brd<<2)&mask;
+	}
+	else{
+		pushSquares|=brd>>1;
+		takeSquares|=brd>>(1+CHAR_BIT);
+		takeSquares|=brd<<(CHAR_BIT-1);
+		pushSquares|=(brd>>2)&mask;
 	}
 	for(int i=0;i<num_piece_types;i++){
-		takeSquares&=(bitbrds[index]);
+		pushSquares&=(~bitbrds[i]);
+	}
+	for(int i=otherPieces(blackOrWhite);i<otherPieces(blackOrWhite)+6;i++){
+		takeSquares&=(bitbrds[i]);
 	}
 	return pushSquares|takeSquares;
 }
-Bitboard* kingSet(int index){
+Bitboard* kingSet(int64_t brd, int blackOrWhite){
 	int64_t newSquares=0;
 	int moveSquares[4]={1,7,8,9};
 	for(int i=0;i<4;i++){
-		newSquares|=bitbrds[index]<<moveSquares[i];
-		newSquares|=bitbrds[index]>>moveSquares[i];
+		newSquares|=brd<<moveSquares[i];
+		newSquares|=brd>>moveSquares[i];
+	}
+	for(int i=myPieces(blackOrWhite);i<myPieces(blackOrWhite)+6;i++){
+		newSquares&=(~bitbrds[i]);
 	}
 	int64_t mask=((int64_t)1<<(2*(CHAR_BIT)))|((int64_t)1<<(6*(CHAR_BIT)))
 	mask|=mask<<7;
-	newSquares|=(bitbrds[index]>>(2*CHAR_BIT))&mask;
+	newSquares|=(brd>>(2*CHAR_BIT))&mask;
 	return newSquares;
 }
-Bitboard* rookSet(){
+Bitboard* rookSet(int64_t brd, int blackOrWhite){
+	int64_t newSquares=0;
+	int directions[4]={1,8};
+	int direction;
+	for(int i=0;i<2;i++){
+		direction=directions[i];
+		while(!isOccupied())
+	}
+}
+Bitboard* bishopSet(int brd, int blackOrWhite){
 
 }
-Bitboard* bishopSet(){
-
-}
-Bitboard* queenSet(){
-
+Bitboard* queenSet(int brd, int blackOrWhite){
+	return rookSet(brd, blackOrWhite)|bishopSet(brd,blackOrWhite);
 }
 Bitboard::~Bitboard(){
 }

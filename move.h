@@ -8,5 +8,6 @@ namespace move{
 	uint y1(move_t move);
 	uint x2(move_t move);
 	uint y2(move_t move);
+	uint moveno(move_t move);
 	move_t changePiece(move_t move, char c);
 }
