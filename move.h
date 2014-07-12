@@ -1,12 +1,12 @@
 #include <limits.h>
 #include <stdint.h>
 typedef unsigned int uint;
-
-const char piecemap[12]={'P','R','N','B','Q','K','p','r','n','b','q','k'};
+const int num_piece_types=13;
+const char piecemap[num_piece_types]={'P','R','N','B','Q','K','p','r','n','b','q','k','_'};
 typedef struct move_t{
 private:
 	uint indexPiece(char c){
-		for(int i=0;i<12;i++){
+		for(int i=0;i<num_piece_types;i++){
 			if(piecemap[i]==c)
 				return i;
 		}
@@ -21,6 +21,7 @@ public:
 	unsigned int pieceTaken : 4;
 	bool evaluation_sign    : 1;
 	unsigned int evaluation : 11;
+	//pieceTaken should be '_' if no piece was taken
 	move_t(unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2, char pieceMoved, char pieceTaken);
 	uint getx1(){return x1;}
 	uint gety1(){return y1;}

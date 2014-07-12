@@ -1,4 +1,3 @@
-#include "Bitboard.h"
 #include "move.h"
 #include <iostream>
 #include <string>
@@ -17,8 +16,7 @@ public:
 	//if nothing there return '_'
 	virtual char piece(int,int)=0;
 	//a zero-terminated history of all moves that have been played in the game
-	virtual move_t* moveHistory()=0;
+	virtual move_t* getMoveHistory()=0;
 	//the only non-abstract method in the class. Returns a string that represents the chessboard
-	string tostring() const;
+	virtual string tostring()=0;
 };
-extern ostream& operator<<(ostream &strm, const Chessboard* board);
