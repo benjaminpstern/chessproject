@@ -141,10 +141,10 @@ Bitboard* rookSet(int64_t brd, int blackOrWhite){
 		while(!isOccupied())
 	}
 }
-Bitboard* bishopSet(int brd, int blackOrWhite){
+Bitboard* bishopSet(int64_t brd, int blackOrWhite){
 
 }
-Bitboard* queenSet(int brd, int blackOrWhite){
+Bitboard* queenSet(int64_t brd, int blackOrWhite){
 	return rookSet(brd, blackOrWhite)|bishopSet(brd,blackOrWhite);
 }
 Bitboard::~Bitboard(){
