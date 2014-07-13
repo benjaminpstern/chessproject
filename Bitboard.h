@@ -59,12 +59,25 @@ public:
 	char piece(int,int);
 	//return a zero-terminated list of all moves that have been played in the game.
 	move_t* getMoveHistory();
+	int64_t occupancySet();
+	int64_t ownPieces(int blackOrWhite);
+	int64_t enemyPieces(int blackOrWhite);
+	int64_t pieceSet(int pieceIndex);
 	int64_t knightSet(int64_t brd,int blackOrWhite);
 	int64_t pawnSet(int64_t brd, int blackOrWhite);
 	int64_t kingSet(int64_t brd, int blackOrWhite);
 	int64_t rookSet(int64_t brd, int blackOrWhite);
 	int64_t bishopSet(int64_t brd, int blackOrWhite);
 	int64_t queenSet(int64_t brd, int blackOrWhite);
+	int64_t firstPiece(int64_t brd);
+	int64_t file(int n){
+		return 255<<(8*n);
+	}
+	int64_t rank(int n){
+		return (int64_t)72340172838076673<<n;
+	}
+	void print_bitboard(int64_t brd);
+	void print_binary(int64_t brd);
 	string tostring();
 	~Bitboard();
 };

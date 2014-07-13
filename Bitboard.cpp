@@ -86,36 +86,61 @@ void Bitboard::startPosition(){
 	occupy('q',3,7);
 	occupy('k',4,7);
 }
+int64_t Bitboard::occupancySet(){
+	int64_t occ=0;
+	for(int i=0;i<12;i++){
+		occ|=bitbrds[i];
+	}
+	return occ;
+}
+int64_t Bitboard::ownPieces(int blackOrWhite){
+	int64_t set=0;
+	for(int i=myPieces(blackOrWhite);i<myPieces(blackOrWhite)+6;i++){
+		//cout<<i<<endl;
+		//print_bitboard(bitbrds[i]);
+		set|=(bitbrds[i]);
+	}
+	return set;
+}
+int64_t Bitboard::enemyPieces(int blackOrWhite){
+	int64_t set=0;
+	for(int i=myPieces(blackOrWhite);i<otherPieces(blackOrWhite)+6;i++){
+		set|=(bitbrds[i]);
+	}
+	return set;
+}
+int64_t Bitboard::pieceSet(int pieceIndex){
+	switch(pieceIndex){
+		case 0:
+			return pawnSet(bitbrds[pieceIndex],0);
+		case 1:
+			return rookSet(bitbrds[pieceIndex],0);
+		case 2:
+			return knightSet(bitbrds[pieceIndex],0);
+		case 3:
+			return bishopSet(bitbrds[pieceIndex],0);
+		case 4:
+			return queenSet(bitbrds[pieceIndex],0);
+		case 5:
+			return kingSet(bitbrds[pieceIndex],0);
+		case 6:
+			return pawnSet(bitbrds[pieceIndex],1);
+		case 7:
+			return rookSet(bitbrds[pieceIndex],1);
+		case 8:
+			return knightSet(bitbrds[pieceIndex],1);
+		case 9:
+			return bishopSet(bitbrds[pieceIndex],1);
+		case 10:
+			return queenSet(bitbrds[pieceIndex],1);
+		case 11:
+			return kingSet(bitbrds[pieceIndex],1);
+	}
+}
 //return true if the move is legal, false otherwise
 bool Bitboard::isLegal(move_t m){
 	int64_t newBoard=bitbrds[m.pieceMoved]&((int64_t)1<<(m.x1*8+m.y1));
-	switch(m.pieceMoved){
-		case 0:
-			return ((int64_t)1<<(m.x2*8+m.y1))&pawnSet(newBoard,0);
-		case 1:
-			return ((int64_t)1<<(m.x2*8+m.y1))&rookSet(newBoard,0);
-		case 2:
-			return ((int64_t)1<<(m.x2*8+m.y1))&knightSet(newBoard,0);
-		case 3:
-			return ((int64_t)1<<(m.x2*8+m.y1))&bishopSet(newBoard,0);
-		case 4:
-			return ((int64_t)1<<(m.x2*8+m.y1))&queenSet(newBoard,0);
-		case 5:
-			return ((int64_t)1<<(m.x2*8+m.y1))&kingSet(newBoard,0);
-		case 6:
-			return ((int64_t)1<<(m.x2*8+m.y1))&pawnSet(newBoard,1);
-		case 7:
-			return ((int64_t)1<<(m.x2*8+m.y1))&rookSet(newBoard,1);
-		case 8:
-			return ((int64_t)1<<(m.x2*8+m.y1))&knightSet(newBoard,1);
-		case 9:
-			return ((int64_t)1<<(m.x2*8+m.y1))&bishopSet(newBoard,1);
-		case 10:
-			return ((int64_t)1<<(m.x2*8+m.y1))&queenSet(newBoard,1);
-		case 11:
-			return ((int64_t)1<<(m.x2*8+m.y1))&kingSet(newBoard,1);
-	}
-	return false;
+	return ((int64_t)1<<(m.x2*8+m.y1))&pieceSet(m.pieceMoved);
 }
 //make the move on the board, return true if successful
 bool Bitboard::move(move_t m){
@@ -150,16 +175,23 @@ move_t* Bitboard::getMoveHistory(){
 }
 int64_t Bitboard::knightSet(int64_t brd,int blackOrWhite){
 	int64_t newSquares=0;
-	int moveSquares[4]={6,10,15,17};
-	for(int i=0;i<4;i++){
-		newSquares|=brd<<moveSquares[i];
-		newSquares|=brd>>moveSquares[i];
-	}
-	//this loop goes through all pieces of the same color as this piece
-	//and turns off places where the knight would be taking its own piece.
-	for(int i=myPieces(blackOrWhite);i<myPieces(blackOrWhite)+6;i++){
-		newSquares&=(~bitbrds[i]);
-	}
+	newSquares|=(brd>>6)&~(rank(0)|rank(1));
+	print_bitboard(newSquares);
+	newSquares|=(brd<<6)&~(rank(6)|rank(7));
+	print_bitboard(newSquares);
+	newSquares|=(brd<<10)&~(rank(0)|rank(1));
+	print_bitboard(newSquares);
+	newSquares|=(brd>>10)&~(rank(6)|rank(7));
+	print_bitboard(newSquares);
+	newSquares|=(brd>>15)&~(rank(0));
+	print_bitboard(newSquares);
+	newSquares|=(brd<<15)&~(rank(7));
+	print_bitboard(newSquares);
+	newSquares|=(brd<<17)&~(rank(0));
+	print_bitboard(newSquares);
+	newSquares|=(brd>>17)&~(rank(7));
+	print_bitboard(newSquares);
+	newSquares&=(~ownPieces(blackOrWhite));
 	return newSquares;
 }
 int64_t Bitboard::pawnSet(int64_t brd, int blackOrWhite){
@@ -191,43 +223,43 @@ int64_t Bitboard::pawnSet(int64_t brd, int blackOrWhite){
 	for(int i=0;i<num_piece_types;i++){
 		pushSquares&=(~bitbrds[i]);
 	}
-	for(int i=otherPieces(blackOrWhite);i<otherPieces(blackOrWhite)+6;i++){
-		takeSquares&=(bitbrds[i]);
-	}
+	takeSquares&=enemyPieces(blackOrWhite);
 	return pushSquares|takeSquares;
 }
 int64_t Bitboard::kingSet(int64_t brd, int blackOrWhite){
 	int64_t newSquares=0;
+	int64_t taboo=0;
 	int moveSquares[4]={1,7,8,9};
 	for(int i=0;i<4;i++){
 		newSquares|=brd<<moveSquares[i];
 		newSquares|=brd>>moveSquares[i];
 	}
-	for(int i=myPieces(blackOrWhite);i<myPieces(blackOrWhite)+6;i++){
-		newSquares&=(~bitbrds[i]);
+	newSquares&=~(ownPieces(blackOrWhite));
+	for(int i=otherPieces(blackOrWhite);i<otherPieces(blackOrWhite)+6;i++){
+		taboo|=pieceSet(i);
 	}
 	int64_t mask=((int64_t)1<<(2*(CHAR_BIT)))|((int64_t)1<<(6*(CHAR_BIT)));
 	mask|=mask<<7;
 	newSquares|=(brd>>(2*CHAR_BIT))&mask;
+	newSquares&=~taboo;
 	return newSquares;
 }
 int64_t Bitboard::rookSet(int64_t brd, int blackOrWhite){
 	int64_t newSquares=0;
-	int directions[4]={1,8};
-	int direction;
-	for(int i=0;i<2;i++){
-		direction=directions[i];
-		//while(!isOccupied()){
-
-		//}
-	}
-	return newSquares;
+	int64_t occ=occupancySet();
+	int64_t forwardAttacks=occ^(occ +((-brd)<<1));
+	int64_t backwardAttacks=occ^(~(~occ +((-(~brd))<<1)));
+	newSquares|=forwardAttacks;
+	newSquares|=backwardAttacks;
 }
 int64_t Bitboard::bishopSet(int64_t brd, int blackOrWhite){
 
 }
 int64_t Bitboard::queenSet(int64_t brd, int blackOrWhite){
 	return rookSet(brd, blackOrWhite)|bishopSet(brd,blackOrWhite);
+}
+int64_t Bitboard::firstPiece(int64_t brd){
+	return brd&-brd;
 }
 string Bitboard::tostring(){
 	string s="";
@@ -240,6 +272,32 @@ string Bitboard::tostring(){
 	}
 	s.push_back('\n');
 	return s;
+}
+void Bitboard::print_bitboard(int64_t brd){
+	for(int j=7;j>=0;j--){
+		for(int i=0;i<8;i++){
+			//cout<<i*8+j;
+			if(brd>>(i*8+j)&1){
+				cout<<"1 ";
+			}
+			else{
+				cout<<". ";
+			}
+		}
+		cout<<endl;
+	}
+	cout<<endl;
+}
+void Bitboard::print_binary(int64_t brd){
+	int64_t mask=(int64_t)1<<63;
+	for(int i=0;i<64;i++){
+		if(brd&mask)
+			cout<<"1";
+		else
+			cout<<"0";
+		brd<<=1;
+	}
+	cout<<endl;
 }
 Bitboard::~Bitboard(){
 	free(moveHistory);
