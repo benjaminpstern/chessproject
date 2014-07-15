@@ -104,7 +104,7 @@ int64_t Bitboard::ownPieces(int blackOrWhite){
 }
 int64_t Bitboard::enemyPieces(int blackOrWhite){
 	int64_t set=0;
-	for(int i=myPieces(blackOrWhite);i<otherPieces(blackOrWhite)+6;i++){
+	for(int i=otherPieces(blackOrWhite);i<otherPieces(blackOrWhite)+6;i++){
 		set|=(bitbrds[i]);
 	}
 	return set;
@@ -176,21 +176,13 @@ move_t* Bitboard::getMoveHistory(){
 int64_t Bitboard::knightSet(int64_t brd,int blackOrWhite){
 	int64_t newSquares=0;
 	newSquares|=(brd>>6)&~(rank(0)|rank(1));
-	print_bitboard(newSquares);
 	newSquares|=(brd<<6)&~(rank(6)|rank(7));
-	print_bitboard(newSquares);
 	newSquares|=(brd<<10)&~(rank(0)|rank(1));
-	print_bitboard(newSquares);
 	newSquares|=(brd>>10)&~(rank(6)|rank(7));
-	print_bitboard(newSquares);
 	newSquares|=(brd>>15)&~(rank(0));
-	print_bitboard(newSquares);
 	newSquares|=(brd<<15)&~(rank(7));
-	print_bitboard(newSquares);
 	newSquares|=(brd<<17)&~(rank(0));
-	print_bitboard(newSquares);
 	newSquares|=(brd>>17)&~(rank(7));
-	print_bitboard(newSquares);
 	newSquares&=(~ownPieces(blackOrWhite));
 	return newSquares;
 }
@@ -198,31 +190,30 @@ int64_t Bitboard::pawnSet(int64_t brd, int blackOrWhite){
 	int64_t pushSquares=0;//the squares where the pawn would be pushing
 	int64_t takeSquares=0;//the squares where the pawn would be taking
 	int forward=1;
-	if(blackOrWhite>5){
+	if(blackOrWhite>0){
 		forward=-1;
 	}
-	int64_t mask=(((int64_t)1)<<3);
+	int64_t mask=rank(3);
 	if(forward==-1)
 		mask<<=1;
-	for(int i=0;i<7;i++){
-		mask<<=CHAR_BIT;
-		mask|=1;
-	}
 	if(forward==1){
 		pushSquares|=brd<<1;
 		takeSquares|=brd<<(1+CHAR_BIT);
 		takeSquares|=brd>>(CHAR_BIT-1);
-		pushSquares|=(brd<<2)&mask;
+		int64_t doublePush=(brd<<2)&mask;
+		int64_t occ=occupancySet();
+		pushSquares|=(doublePush&(~occ&~(occ<<1)));
+		//print_bitboard((~occ&~(occ<<1)));
 	}
 	else{
 		pushSquares|=brd>>1;
 		takeSquares|=brd>>(1+CHAR_BIT);
 		takeSquares|=brd<<(CHAR_BIT-1);
-		pushSquares|=(brd>>2)&mask;
+		int64_t doublePush=(brd>>2)&mask;
+		int64_t occ=occupancySet();
+		pushSquares|=(doublePush&(~occ&~(occ>>1)));
 	}
-	for(int i=0;i<num_piece_types;i++){
-		pushSquares&=(~bitbrds[i]);
-	}
+	pushSquares&=(~occupancySet());
 	takeSquares&=enemyPieces(blackOrWhite);
 	return pushSquares|takeSquares;
 }
@@ -251,6 +242,7 @@ int64_t Bitboard::rookSet(int64_t brd, int blackOrWhite){
 	int64_t backwardAttacks=occ^(~(~occ +((-(~brd))<<1)));
 	newSquares|=forwardAttacks;
 	newSquares|=backwardAttacks;
+	return newSquares;
 }
 int64_t Bitboard::bishopSet(int64_t brd, int blackOrWhite){
 
