@@ -2,7 +2,10 @@
 #include <stdint.h>
 typedef unsigned int uint;
 const int num_piece_types=13;
-const char piecemap[num_piece_types]={'P','R','N','B','Q','K','p','r','n','b','q','k','_'};
+const char piecemap[num_piece_types]={'P','R','N','B','Q','K','p','r','n','b','q','k','_'};//the characters mapped to numbers using an array.
+//a struct to represent a single ply of a chess move.
+//fields use bitfields to make the size of this struct the same size as a 4 byte integer.
+//ideally pass this around by value.
 typedef struct move_t{
 private:
 	uint indexPiece(char c){
@@ -23,20 +26,24 @@ public:
 	unsigned int evaluation : 11;
 	//pieceTaken should be '_' if no piece was taken
 	move_t(unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2, char pieceMoved, char pieceTaken);
-	uint getx1(){return x1;}
-	uint gety1(){return y1;}
-	uint getx2(){return x2;}
-	uint gety2(){return y2;}
-	char getpieceMoved(){return piecemap[pieceMoved];}
-	char getpieceTaken(){return piecemap[pieceTaken];}
-	double getevaluation(){
+	uint getx1(){return x1;}//the x position of the original square. From 0 to 7
+	uint gety1(){return y1;}//the y position of the original square. From 0 to 7
+	uint getx2(){return x2;}//the x position of the new square. From 0 to 7
+	uint gety2(){return y2;}//the y position of the new square. From 0 to 7
+	char getpieceMoved(){return piecemap[pieceMoved];}//the character representing the piece that was moved. rnbqkpRNBQKP
+	char getpieceTaken(){return piecemap[pieceTaken];}//the character representing the piece that was taken. 
+	//													If none was taken then '_' rnbqkpRNBQKP_
+	double getevaluation(){//Since evaluation must be stored as an int, cast it to a double and divide by 100.
+							//this allows for up to a .01 pawn difference between moves, which is more than enough
 		if(evaluation_sign)
 			return (double)evaluation/100;
 		else 
 			return (double)evaluation/100*-1;}
-	void changePieceMoved(char c){pieceMoved=indexPiece(c);};
-	void changePieceTaken(char c){pieceTaken=indexPiece(c);};
-	void changeEvaluation(double d){
+	void changePieceMoved(char c){pieceMoved=indexPiece(c);};//change the piece moved. 
+	//															rnbqkpRNBQKP Don't put anything silly in there or there will be problems
+	void changePieceTaken(char c){pieceTaken=indexPiece(c);};//change the piece taken. 
+	//															rnbqkpRNBQKP_ Don't put anything silly in there or there will be problems
+	void changeEvaluation(double d){//change the evaluation of the move. This is for use by the engine that is traversing the move tree.
 		if(d<0){
 			evaluation_sign=false;
 			evaluation=(int)d*-100;

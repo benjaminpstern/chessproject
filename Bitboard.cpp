@@ -238,10 +238,10 @@ int64_t Bitboard::kingSet(int64_t brd, int blackOrWhite){
 int64_t Bitboard::rookSet(int64_t brd, int blackOrWhite){
 	int64_t newSquares=0;
 	int64_t occ=occupancySet();
-	int64_t forwardAttacks=occ^(occ +((-brd)<<1));
-	int64_t backwardAttacks=occ^(~(~occ +((-(~brd))<<1)));
-	newSquares|=forwardAttacks;
-	newSquares|=backwardAttacks;
+	print_bitboard(occ);
+	print_bitboard(brd);
+	int64_t fileAttacks=(occ-2*brd)^reverse(reverse(occ)-(reverse(brd)<<1));
+	newSquares|=fileAttacks;
 	return newSquares;
 }
 int64_t Bitboard::bishopSet(int64_t brd, int blackOrWhite){

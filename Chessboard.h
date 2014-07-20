@@ -2,6 +2,8 @@
 #include <iostream>
 #include <string>
 using namespace std;
+//an abstract class for a Chessboard.
+//Every implementation of a chessboard should have at least these basic methods
 class Chessboard{
 public:
 	//set up the start position on a board
