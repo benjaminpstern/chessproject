@@ -3,6 +3,10 @@
 #include <string.h>
 #include <stdint.h>
 #include "Chessboard.h"
+const int64_t notFirstRank = 0xfefefefefefefefe; // ~0x0101010101010101
+const int64_t notLastRank = 0x7f7f7f7f7f7f7f7f; // ~0x8080808080808080
+const int64_t notFirstSecondRank = ~0x0202020202020202;
+const int64_t notTwoLastRanks = ~0xc0c0c0c0c0c0c0c0;
 /*
  * a class for a representation of a chessboard that has 12 64-bit integers
  * representing the occupancy set for each type of piece.
@@ -98,19 +102,20 @@ public:
 	int64_t occupancySet();
 	int64_t ownPieces(int blackOrWhite);
 	int64_t enemyPieces(int blackOrWhite);
-	int64_t pieceSet(int pieceIndex);
-	int64_t knightSet(int64_t brd,int blackOrWhite);
-	int64_t pawnSet(int64_t brd, int blackOrWhite);
-	int64_t kingSet(int64_t brd, int blackOrWhite);
-	int64_t rookSet(int64_t brd, int blackOrWhite);
-	int64_t bishopSet(int64_t brd, int blackOrWhite);
-	int64_t queenSet(int64_t brd, int blackOrWhite);
+	int64_t pieceAttacks(int pieceIndex);
+	int64_t knightAttacks(int64_t brd,int blackOrWhite);
+	int64_t pawnAttacks(int64_t brd, int blackOrWhite);
+	int64_t kingAttacks(int64_t brd, int blackOrWhite);
+	int64_t rookAttacks(int64_t brd, int blackOrWhite);
+	int64_t bishopAttacks(int64_t brd, int blackOrWhite);
+	int64_t queenAttacks(int64_t brd, int blackOrWhite);
 	int64_t firstPiece(int64_t brd);
+	int64_t restPieces(int64_t brd);
 	int64_t file(int n){
-		return 255<<(8*n);
+		return (int64_t)255<<(8*n);
 	}
 	int64_t rank(int n){
-		return (int64_t)72340172838076673<<n;
+		return 0x0101010101010101<<n;
 	}
 	/*
 	 * These are print methods for debugging and testing purposes

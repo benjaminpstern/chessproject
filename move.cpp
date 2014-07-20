@@ -11,3 +11,11 @@ move_t::move_t(unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y
 	this->pieceMoved=indexPiece(pieceMoved);
 	this->pieceTaken=indexPiece(pieceTaken);
 }
+move_t::move_t(){
+	this->x1=0;
+	this->y1=0;
+	this->x2=0;
+	this->y2=0;
+	this->pieceMoved=0;
+	this->pieceTaken=0;
+}

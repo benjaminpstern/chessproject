@@ -1,8 +1,8 @@
 #include <limits.h>
 #include <stdint.h>
-typedef unsigned int uint;
+typedef uint32_t uint;
 const int num_piece_types=13;
-const char piecemap[num_piece_types]={'P','R','N','B','Q','K','p','r','n','b','q','k','_'};//the characters mapped to numbers using an array.
+const char piecemap[num_piece_types]={'P','R','N','B','Q','K','p','r','n','b','q','k','_'};//the characters mapped to numbers using an arr
 //a struct to represent a single ply of a chess move.
 //fields use bitfields to make the size of this struct the same size as a 4 byte integer.
 //ideally pass this around by value.
@@ -26,6 +26,7 @@ public:
 	unsigned int evaluation : 11;
 	//pieceTaken should be '_' if no piece was taken
 	move_t(unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2, char pieceMoved, char pieceTaken);
+	move_t();
 	uint getx1(){return x1;}//the x position of the original square. From 0 to 7
 	uint gety1(){return y1;}//the y position of the original square. From 0 to 7
 	uint getx2(){return x2;}//the x position of the new square. From 0 to 7
