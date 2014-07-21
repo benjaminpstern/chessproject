@@ -3,10 +3,12 @@
 #include <string.h>
 #include <stdint.h>
 #include "Chessboard.h"
-const int64_t notFirstRank = 0xfefefefefefefefe; // ~0x0101010101010101
-const int64_t notLastRank = 0x7f7f7f7f7f7f7f7f; // ~0x8080808080808080
-const int64_t notFirstSecondRank = ~0x0202020202020202;
-const int64_t notTwoLastRanks = ~0xc0c0c0c0c0c0c0c0;
+const uint64_t notFirstRank = 0xfefefefefefefefe; // ~0x0101010101010101
+const uint64_t notLastRank = 0x7f7f7f7f7f7f7f7f; // ~0x8080808080808080
+const uint64_t notFirstSecondRank = ~0x0202020202020202;
+const uint64_t notTwoLastRanks = ~0xc0c0c0c0c0c0c0c0;
+const uint64_t a1h8Diagonal = 0x8040201008040201;
+const uint64_t a8h1Diagonal = 0x102040810204080;
 /*
  * a class for a representation of a chessboard that has 12 64-bit integers
  * representing the occupancy set for each type of piece.
@@ -15,9 +17,9 @@ const int64_t notTwoLastRanks = ~0xc0c0c0c0c0c0c0c0;
  */
 class Bitboard : public Chessboard{
 private:
-	//a int64_t is 8 bytes, enough for 64 squares.
+	//a uint64_t is 8 bytes, enough for 64 squares.
 	//this array should be of size 12.
-	int64_t* bitbrds;
+	uint64_t* bitbrds;
 	//a history of all the moves that have been played.
 	move_t* moveHistory;
 	//the number of plies(half moves) that have been played
@@ -28,11 +30,11 @@ private:
 	//returns the index of the board that represents the presence of character c
 	//or -1 if the character doesn't represent a piece
 	int boardIndex(char c);
-	int64_t reverseBits(unsigned char c){
-		return (int64_t)(c * 0x0202020202ULL & 0x010884422010ULL) % 1023;
+	uint64_t reverseBits(unsigned char c){
+		return (uint64_t)(c * 0x0202020202ULL & 0x010884422010ULL) % 1023;
 	}
 	//reverses the bits of a 64 bit integer
-	int64_t reverse(int64_t toReverse){
+	uint64_t reverse(uint64_t toReverse){
 		unsigned int reversed;
 		unsigned char inByte0 = (toReverse & 0xFF);
 		unsigned char inByte1 = (toReverse & 0xFF00) >> 8;
@@ -99,23 +101,57 @@ public:
 	 * firstPiece isolates the least significant bit on a board. Useful for finding the moves of this piece for move generation
 	 * file and rank are masks that are all 1's on their specific file or rank, for example the 0th file is the A file.
 	 */
-	int64_t occupancySet();
-	int64_t ownPieces(int blackOrWhite);
-	int64_t enemyPieces(int blackOrWhite);
-	int64_t pieceAttacks(int pieceIndex);
-	int64_t knightAttacks(int64_t brd,int blackOrWhite);
-	int64_t pawnAttacks(int64_t brd, int blackOrWhite);
-	int64_t kingAttacks(int64_t brd, int blackOrWhite);
-	int64_t rookAttacks(int64_t brd, int blackOrWhite);
-	int64_t bishopAttacks(int64_t brd, int blackOrWhite);
-	int64_t queenAttacks(int64_t brd, int blackOrWhite);
-	int64_t firstPiece(int64_t brd);
-	int64_t restPieces(int64_t brd);
-	int64_t file(int n){
-		return (int64_t)255<<(8*n);
+	uint64_t occupancySet();
+	uint64_t ownPieces(int blackOrWhite);
+	uint64_t enemyPieces(int blackOrWhite);
+	uint64_t pieceAttacks(int pieceIndex);
+	uint64_t knightAttacks(uint64_t brd,int blackOrWhite);
+	uint64_t pawnAttacks(uint64_t brd, int blackOrWhite);
+	uint64_t kingAttacks(uint64_t brd, int blackOrWhite);
+	uint64_t rookAttacks(uint64_t brd, int blackOrWhite);
+	uint64_t bishopAttacks(uint64_t brd, int blackOrWhite);
+	uint64_t queenAttacks(uint64_t brd, int blackOrWhite);
+	uint64_t firstPiece(uint64_t brd);
+	uint64_t restPieces(uint64_t brd);
+	uint64_t file(int n){
+		return (uint64_t)255<<(8*n);
 	}
-	int64_t rank(int n){
+	uint64_t rank(int n){
 		return 0x0101010101010101<<n;
+	}
+	//returns a diagonal mask excluding the square on square.
+	//the diagonal will go up and right if right is true, otherwise up and left
+	uint64_t diagonalMask(uint64_t square, bool right){
+		if(square==0){//otherwise it will run forever
+			return 0;
+		}
+		uint64_t mask;
+		int i=0;
+		//print_bitboard(square);
+		if(right){
+			mask=(uint64_t)1<<8*7;
+			while(!(mask&square)){
+				//print_bitboard(mask);
+				mask>>=8;
+				//print_binary(mask);
+				//print_bitboard(mask);
+				if(i<7){
+					mask|=mask<<9;
+				}
+				i++;
+			}
+			return mask^square;
+		}
+		mask=1;
+		while(!(mask&square)){
+			mask<<8;
+			if(i<7){
+				mask|=(mask>>7);
+			}
+			i++;
+		}
+		return mask^square;
+
 	}
 	/*
 	 * These are print methods for debugging and testing purposes
@@ -134,8 +170,8 @@ public:
 	 //  R _ B Q K B _ P
 
 
-	void print_bitboard(int64_t brd);
-	void print_binary(int64_t brd);
+	void print_bitboard(uint64_t brd);
+	void print_binary(uint64_t brd);
 	string tostring();
 	~Bitboard();
 };
