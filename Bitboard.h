@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <string.h>
+#include <stdio.h>
 #include <stdint.h>
 #include "Chessboard.h"
 const uint64_t notFirstRank = 0xfefefefefefefefe; // ~0x0101010101010101
@@ -35,7 +36,6 @@ private:
 	}
 	//reverses the bits of a 64 bit integer
 	uint64_t reverse(uint64_t toReverse){
-		unsigned int reversed;
 		unsigned char inByte0 = (toReverse & 0xFF);
 		unsigned char inByte1 = (toReverse & 0xFF00) >> 8;
 		unsigned char inByte2 = (toReverse & 0xFF0000) >> 16;
@@ -46,6 +46,17 @@ private:
 		unsigned char inByte7 = (toReverse & 0xFF00000000000000) >> 56;
 		return (reverseBits(inByte0) << 56) | (reverseBits(inByte1) << 48) | (reverseBits(inByte2) << 40) | (reverseBits(inByte3) << 32| 
 			(reverseBits(inByte4))<<24 |(reverseBits(inByte5))<<16 | (reverseBits(inByte6))<<8| reverseBits(inByte7));
+	}
+	uint64_t byteSwap(uint64_t toReverse){
+		uint64_t inByte0 = (toReverse & 0xFF);
+		uint64_t inByte1 = (toReverse & 0xFF00) >> 8;
+		uint64_t inByte2 = (toReverse & 0xFF0000) >> 16;
+		uint64_t inByte3 = (toReverse & 0xFF000000) >> 24;
+		uint64_t inByte4 = (toReverse & 0xFF00000000) >> 32;
+		uint64_t inByte5 = (toReverse & 0xFF0000000000) >> 40;
+		uint64_t inByte6 = (toReverse & 0xFF000000000000) >> 48;
+		uint64_t inByte7 = (toReverse & 0xFF00000000000000) >> 56;
+		return (inByte0 << 56) | (inByte1 << 48) | (inByte2 << 40) | (inByte3 << 32) | (inByte4<<24) |(inByte5<<16) | (inByte6<<8)| inByte7;
 	}
 	/*
 	 * blackOrWhite is an integer that is 0 if a piece is white and 1 if the piece is black
@@ -144,7 +155,7 @@ public:
 		}
 		mask=1;
 		while(!(mask&square)){
-			mask<<8;
+			mask<<=8;
 			if(i<7){
 				mask|=(mask>>7);
 			}

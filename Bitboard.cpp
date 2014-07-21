@@ -283,9 +283,51 @@ uint64_t Bitboard::rookAttacks(uint64_t brd, int blackOrWhite){
 	newSquares|=rankAttacks;
 	return newSquares;
 }
+/*
+U64 diagonalAttacks(U64 occ, int sqOfSlider) {
+   U64 forward, reverse, slider, lineMask;
+ 
+   lineMask = diagonalMaskEx[sqOfSlider]; // excludes square of slider
+   slider   = singleBitboard[sqOfSlider]; // single bit 1 << sq, 2^sq
+ 
+   forward  = occ & lineMask; // also performs the first subtraction by clearing the s in o
+   reverse  = byteswap( forward ); // o'-s'
+   forward -=         ( slider  ); // o -2s
+   reverse -= byteswap( slider  ); // o'-2s'
+   forward ^= byteswap( reverse );
+   return forward & lineMask;      // mask the line again
+}
+*/
 uint64_t Bitboard::bishopAttacks(uint64_t brd, int blackOrWhite){
-	print_bitboard(2);
-	print_bitboard(diagonalMask((uint64_t)2,true));
+	uint64_t newSquares = 0;
+	uint64_t forward;
+	uint64_t rev;
+	uint64_t lineMask1;
+	uint64_t lineMask2;
+	uint64_t bishop;
+	uint64_t occ = occupancySet();
+	uint64_t bishops=brd;
+	while(bishops){
+		//print_bitboard(bishops);
+		bishop = firstPiece(bishops);
+		bishops = restPieces(bishops);
+		lineMask1 = diagonalMask(bishop,true);
+		lineMask2 = diagonalMask(bishop,false);
+		forward = occ & lineMask1;
+		rev = byteSwap(forward);
+		forward -= bishop;
+		rev -= byteSwap(bishop);
+		forward ^= byteSwap(rev);
+		newSquares |= (forward & lineMask1);
+		forward = occ & lineMask2;
+		rev = byteSwap(forward);
+		forward -= bishop;
+		rev -= byteSwap(bishop);
+		forward ^= byteSwap(rev);
+		newSquares |= (forward & lineMask2);
+	}
+	return newSquares;
+	
 }
 uint64_t Bitboard::queenAttacks(uint64_t brd, int blackOrWhite){
 	return rookAttacks(brd, blackOrWhite) | bishopAttacks(brd,blackOrWhite);
