@@ -16,14 +16,16 @@ int main(){
 	cout<<board;
 	board->move(m1);
 	cout<<board->isLegal(m2)<<endl;
+	board->print_bitboard(board->pieceAttacks(3));
 	board->move(m2);
+	board->print_bitboard(board->pieceAttacks(5));
 	board->move(m3);
 	cout<<board;
 	//board->print_bitboard(board->pieceAttacks(3));
 	//board->print_bitboard(board->occupancySet());
 	board->print_bitboard(board->pieceAttacks(5));
 	board->takeBack();
-	
+	cout<<board;
 	//board->print_bitboard(board->occupancySet());
 	//board->print_bitboard((0x8040201008040201>>8)|(0x8040201008040201<<1));
 	/*uint64_t mask=1;

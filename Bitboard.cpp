@@ -143,7 +143,7 @@ uint64_t Bitboard::pieceAttacks(int pieceIndex){
 //return true if the move is legal, false otherwise
 bool Bitboard::isLegal(move_t m){
 	uint64_t newBoard=bitbrds[m.pieceMoved]&((uint64_t)1<<(m.x1*8+m.y1));
-	return ((uint64_t)1<<(m.x2*8+m.y1))&pieceAttacks(m.pieceMoved)&~ownPieces(m.pieceMoved/6);
+	return ((uint64_t)1<<(m.x2*8+m.y2))&pieceAttacks(m.pieceMoved)&~ownPieces(m.pieceMoved/6);
 }
 //make the move on the board, return true if successful
 bool Bitboard::move(move_t m){
@@ -251,8 +251,8 @@ uint64_t Bitboard::kingAttacks(uint64_t brd, int blackOrWhite){
 	mask|=mask<<7;
 	uint64_t betweenSquares=0x0081810081810000;
 	betweenSquares&=(~occ);
-	betweenSquares&=(betweenSquares>>8);
-	betweenSquares&=(betweenSquares<<8);
+	betweenSquares&=(betweenSquares>>8)|file(6)|file(3);
+	betweenSquares&=(betweenSquares<<8)|file(2)|file(5);
 	newSquares|=(brd>>(2*CHAR_BIT))&mask&betweenSquares;
 	newSquares|=(brd<<(2*CHAR_BIT))&mask&betweenSquares;
 	newSquares&=~taboo;
