@@ -143,7 +143,7 @@ uint64_t Bitboard::pieceAttacks(int pieceIndex){
 //return true if the move is legal, false otherwise
 bool Bitboard::isLegal(move_t m){
 	uint64_t newBoard=bitbrds[m.pieceMoved]&((uint64_t)1<<(m.x1*8+m.y1));
-	return ((uint64_t)1<<(m.x2*8+m.y1))&pieceAttacks(m.pieceMoved);
+	return ((uint64_t)1<<(m.x2*8+m.y1))&pieceAttacks(m.pieceMoved)&~ownPieces(m.pieceMoved/6);
 }
 //make the move on the board, return true if successful
 bool Bitboard::move(move_t m){

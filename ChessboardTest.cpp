@@ -5,14 +5,19 @@ using namespace std;
 int main(){
 	Bitboard* board=new Bitboard();
 	//cout<< board;
-	move_t m(4,1,4,3,'P','_');
+	move_t m1(4,1,4,3,'P','_');
+	move_t m2(5,0,2,3,'B','_');
+	move_t m3(6,0,5,2,'N','_');
 	/*for(int i=0;i<8;i++){
 		for(int j=6;j<8;j++){
 			board->deoccupy(i,j);
 		}
 	}*/
 	cout<<board;
-	board->move(m);
+	board->move(m1);
+	cout<<board->isLegal(m2)<<endl;
+	board->move(m2);
+	board->move(m3);
 	cout<<board;
 	//board->print_bitboard(board->pieceAttacks(3));
 	//board->print_bitboard(board->occupancySet());
