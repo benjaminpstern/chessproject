@@ -32,7 +32,7 @@ private:
 	//or -1 if the character doesn't represent a piece
 	int boardIndex(char c);
 	uint64_t reverseBits(unsigned char c){
-		return (uint64_t)(c * 0x0202020202ULL & 0x010884422010ULL) % 1023;
+		return (uint64_t)((c * 0x0202020202ULL & 0x010884422010ULL) % 1023);
 	}
 	//reverses the bits of a 64 bit integer
 	uint64_t reverse(uint64_t toReverse){

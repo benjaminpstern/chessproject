@@ -230,18 +230,31 @@ uint64_t Bitboard::pawnAttacks(uint64_t brd, int blackOrWhite){
 uint64_t Bitboard::kingAttacks(uint64_t brd, int blackOrWhite){
 	uint64_t newSquares=0;
 	uint64_t taboo=0;
-	int moveSquares[4]={1,7,8,9};
-	for(int i=0;i<4;i++){
-		newSquares|=brd<<moveSquares[i];
-		newSquares|=brd>>moveSquares[i];
-	}
+	uint64_t occ=occupancySet();
+	//int moveSquares[4]={1,7,8,9};
+	//for(int i=0;i<4;i++){
+	newSquares|=(brd<<1)&notFirstRank;
+	newSquares|=(brd>>1)&notLastRank;
+	newSquares|=(brd<<7)&notLastRank;
+	newSquares|=(brd>>7)&notFirstRank;
+	newSquares|=(brd<<8);
+	newSquares|=(brd>>8);
+	newSquares|=(brd<<9)&notFirstRank;
+	newSquares|=(brd>>9)&notLastRank;
+	//}
+	//cout<<1<<endl;
 	//newSquares&=~(ownPieces(blackOrWhite));
-	for(int i=otherPieces(blackOrWhite);i<otherPieces(blackOrWhite)+6;i++){
+	for(int i=otherPieces(blackOrWhite);i<otherPieces(blackOrWhite)+5;i++){//to exclude the enemy king
 		taboo|=pieceAttacks(i);
 	}
 	uint64_t mask=((uint64_t)1<<(2*(CHAR_BIT)))|((uint64_t)1<<(6*(CHAR_BIT)));
 	mask|=mask<<7;
-	newSquares|=(brd>>(2*CHAR_BIT))&mask;
+	uint64_t betweenSquares=0x0081810081810000;
+	betweenSquares&=(~occ);
+	betweenSquares&=(betweenSquares>>8);
+	betweenSquares&=(betweenSquares<<8);
+	newSquares|=(brd>>(2*CHAR_BIT))&mask&betweenSquares;
+	newSquares|=(brd<<(2*CHAR_BIT))&mask&betweenSquares;
 	newSquares&=~taboo;
 	return newSquares;
 }

@@ -11,11 +11,12 @@ int main(){
 			board->deoccupy(i,j);
 		}
 	}*/
+	cout<<board;
 	board->move(m);
 	cout<<board;
 	//board->print_bitboard(board->pieceAttacks(3));
 	//board->print_bitboard(board->occupancySet());
-	board->print_bitboard(board->pieceAttacks(4));
+	board->print_bitboard(board->pieceAttacks(5));
 	board->takeBack();
 	
 	//board->print_bitboard(board->occupancySet());
