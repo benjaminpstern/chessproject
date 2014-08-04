@@ -112,6 +112,16 @@ public:
 		}
 		return x;
 	}
+	//1 if white's move, -1 if black's move
+	int toMove();
+	//the amount of stuff that's hanging.
+	//If there's a lot of stuff hanging the program should go deeper to look for the right moves
+	int fireOnBoard();
+	//should get an array with the n best moves.
+	move_t* nBestMoves(int n);
+	//evaluates the position recursively
+	double evaluate();
+	double evaluate(int depth);
 	//get the y value of the square represented by the 1 bit in brd
 	int yValue(uint64_t brd){
 		int y=0;
@@ -121,6 +131,15 @@ public:
 		}
 		return y;
 	}
+	//gives the number of pieces on a bitboard
+	int numPieces(uint64_t brd){
+		int num=0;
+		while(brd){
+			brd=restPieces(brd);
+			num++;
+		}
+		return num;
+	}
 	//make the move on the board, return true if successful
 	bool move(move_t m);
 	//take back the previous move, return true if successful
@@ -128,6 +147,8 @@ public:
 	//return the character representing the piece on the board.
 	//and if nothing is there return '_'
 	char piece(int,int);
+	//gets the value of the piece on that square
+	int pieceValue(int,int);
 	//return a zero-terminated list of all moves that have been played in the game.
 	move_t* getMoveHistory();
 	/*
@@ -144,6 +165,8 @@ public:
 	uint64_t enemyPieces(int blackOrWhite);
 	uint64_t pieceAttacks(int pieceIndex);
 	uint64_t pieceAttacks(int pieceIndex, uint64_t brd);
+	uint64_t enemyPieceAttacks(int blackOrWhite);
+	uint64_t ownPieceAttacks(int blackOrWhite);
 	uint64_t knightAttacks(uint64_t brd,int blackOrWhite);
 	uint64_t pawnAttacks(uint64_t brd, int blackOrWhite);
 	uint64_t kingAttacks(uint64_t brd, int blackOrWhite);

@@ -1,6 +1,7 @@
 #include <limits.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
 typedef uint32_t uint;
 const int num_piece_types=13;
 const char piecemap[num_piece_types]={'P','R','N','B','Q','K','p','r','n','b','q','k','_'};//the characters mapped to numbers using an arr
@@ -45,12 +46,13 @@ public:
 	char getpieceMoved(){return piecemap[pieceMoved];}//the character representing the piece that was moved. rnbqkpRNBQKP
 	char getpieceTaken(){return piecemap[pieceTaken];}//the character representing the piece that was taken. 
 	//													If none was taken then '_' rnbqkpRNBQKP_
-	double getevaluation(){//Since evaluation must be stored as an int, cast it to a double and divide by 100.
+	double getEvaluation(){//Since evaluation must be stored as an int, cast it to a double and divide by 100.
 							//this allows for up to a .01 pawn difference between moves, which is more than enough
 		if(evaluation_sign)
-			return (double)evaluation/100;
+			return evaluation/100.0;
 		else 
-			return (double)evaluation/100*-1;}
+			return evaluation/100.0*-1;
+	}
 	void changePieceMoved(char c){pieceMoved=indexPiece(c);};//change the piece moved. 
 	//															rnbqkpRNBQKP Don't put anything silly in there or there will be problems
 	void changePieceTaken(char c){pieceTaken=indexPiece(c);};//change the piece taken. 
@@ -58,10 +60,15 @@ public:
 	void changeEvaluation(double d){//change the evaluation of the move. This is for use by the engine that is traversing the move tree.
 		if(d<0){
 			evaluation_sign=false;
-			evaluation=(int)d*-100;
+			evaluation=(int)(d*-100);
 		}
 		else
-			evaluation=(int)d*100;
+			evaluation=(int)(d*100);
+	}
+	char* tostring(){
+		char* s=new char[100];
+		sprintf(s,"%d,%d to %d,%d a %c took a %c\n",this->getx1(),this->gety1(),this->getx2(), this->gety2(), this->getpieceMoved(),this->getpieceTaken());
+		return s;
 	}
 } move_t;
 

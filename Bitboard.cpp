@@ -3,7 +3,7 @@
 #define num_piece_types 12
 #define numMoves 1024
 const char chars[num_piece_types]={'P','R','N','B','Q','K','p','r','n','b','q','k'};
-const int pieceValues[num_piece_types]={1,5,3,3,9,INT_MAX,-1,-5,-3,-3,-9,-INT_MAX};
+const int pieceValues[num_piece_types]={1,5,3,3,9,40,-1,-5,-3,-3,-9,-40};
 const move_t nullMove;
 Bitboard::Bitboard(){
 	bitbrds=new uint64_t [num_piece_types];
@@ -14,6 +14,12 @@ Bitboard::Bitboard(){
 	moveHistory=(move_t*)malloc(sizeof(move_t)*2048);
 	plyNo=0;
 	moveHistory[plyNo]=nullMove;
+}
+//1 if white is to move, -1 if black is to move
+int Bitboard::toMove(){
+	int sideToMove=1;
+	if(plyNo%2==1) sideToMove=-1;
+	return sideToMove; //1 if white is to move, -1 if black is to move
 }
 int Bitboard::boardIndex(char c){
 	int i=0;
@@ -106,11 +112,28 @@ uint64_t Bitboard::ownPieces(int blackOrWhite){
 	}
 	return set;
 }
+uint64_t Bitboard::ownPieceAttacks(int blackOrWhite){
+	uint64_t set=0;
+	for(int i=myPieces(blackOrWhite);i<myPieces(blackOrWhite)+6;i++){
+		//cout<<i<<endl;
+		//print_bitboard(bitbrds[i]);
+		set|=(pieceAttacks(i));
+	}
+	return set;
+}
 //blackOrWhite is 0 if the piece is white or 1 if the piece is blacks
 uint64_t Bitboard::enemyPieces(int blackOrWhite){
 	uint64_t set=0;
 	for(int i=otherPieces(blackOrWhite);i<otherPieces(blackOrWhite)+6;i++){
 		set|=(bitbrds[i]);
+	}
+	return set;
+}
+//attacks of all enemy pieces. blackOrWhite is 0 if the piece is white or 1 if black
+uint64_t Bitboard::enemyPieceAttacks(int blackOrWhite){
+	uint64_t set=0;
+	for(int i=otherPieces(blackOrWhite);i<otherPieces(blackOrWhite)+6;i++){
+		set|=(pieceAttacks(i));
 	}
 	return set;
 }
@@ -181,8 +204,7 @@ bool Bitboard::isLegal(move_t m){
  * pointer to null-terminated array of all legal moves in the position
  */
 move_t* Bitboard::allMoves(){
-	int sideToMove=1;
-	if(plyNo%2==1) sideToMove=-1; //1 if white is to move, -1 if black is to move
+	int sideToMove=toMove();
 	move_t* moves = new move_t[250];
 	int moveno=0;
 	int i=0;
@@ -230,7 +252,7 @@ bool Bitboard::move(move_t m){
 	}
 	moveHistory[plyNo]=m;
 	plyNo++;
-	moveHistory[plyNo]=nullMove;
+	moveHistory[plyNo]=0;
 	return true;
 }
 //take back the previous move, return true if successful
@@ -242,7 +264,9 @@ bool Bitboard::takeBack(){
 	if(m.pieceTaken!=12){
 		bitbrds[m.pieceTaken]|=(uint64_t)0^((uint64_t)1<<(m.x2*8+m.y2));//turn on the place where the piece got taken
 	}
-	moveHistory[plyNo]=nullMove;
+
+	//cout<<plyNo<<endl;
+	moveHistory[plyNo]=0;
 	return true;
 }
 //return the character representing the piece on the board.
@@ -254,6 +278,15 @@ char Bitboard::piece(int x,int y){
 		}
 	}
 	return '_';
+}
+//gets the value of the piece on that square
+int Bitboard::pieceValue(int x,int y){
+	for(int i=0;i<num_piece_types;i++){
+		if((bitbrds[i]>>(x*CHAR_BIT+y))&1){
+			pieceValues[i];
+		}
+	}
+	return 0;
 }
 //return a zero-terminated list of all moves that have been played in the game.
 move_t* Bitboard::getMoveHistory(){
@@ -426,6 +459,98 @@ uint64_t Bitboard::firstPiece(uint64_t brd){
 }
 uint64_t Bitboard::restPieces(uint64_t brd){
 	return brd & (brd - 1);
+}
+//the amount of stuff that's hanging.
+//If there's a lot of stuff hanging the program should go deeper to look for the right moves
+int Bitboard::fireOnBoard(){
+	int sideToMove=toMove();
+	int blackOrWhite=0;
+	int enemyColor=1;
+	uint64_t defense=ownPieceAttacks(blackOrWhite);
+	if(sideToMove<0){
+		blackOrWhite=1;
+		enemyColor=0;
+	} 
+	int fire=0;
+	for(int i=blackOrWhite*6;i<blackOrWhite*6+6;i++){
+		for(int j=enemyColor*6;j<enemyColor*6+6;j++){
+			uint64_t hanging = bitbrds[i]&pieceAttacks(j);
+			while(hanging){
+				uint64_t first=firstPiece(hanging);
+				fire+=pieceValues[i];
+				if(hanging&defense){
+					fire+=pieceValues[j];
+				}
+				hanging=restPieces(hanging);
+			}
+		}
+		//cout<<fire<<endl;
+		return fire;
+	}
+}
+//should get an array with the n best moves.
+move_t* Bitboard::nBestMoves(int n){
+	int sideToMove=toMove();
+	move_t* bestMoves=new move_t[n];
+	for(int i=0;i<n;i++){
+		bestMoves[i].changeEvaluation(40*sideToMove*-1);
+		cout<<bestMoves[i].getEvaluation()*sideToMove<<endl;
+	}
+	move_t* moves = allMoves();
+	for(int i=0;moves[i]!=0;i++){
+		move(moves[i]);
+		//cout<<this;
+		move_t m=moves[i];
+		moves[i].changeEvaluation(evaluate(0));
+		takeBack();
+		//cout<<this;
+	}
+	for(int i=0;moves[i];i++){
+		//cout<<moves[i].getEvaluation()*sideToMove<<" "<<bestMoves[n-1].getEvaluation()*sideToMove<<endl;
+		if (moves[i].getEvaluation()*sideToMove > bestMoves[n-1].getEvaluation()*sideToMove){
+			int j;
+			for(j=n-1;j>=0&&moves[i].getEvaluation()*sideToMove > bestMoves[j].getEvaluation()*sideToMove;j--){
+				if(j!=0){
+					bestMoves[j]=bestMoves[j-1];
+				}
+				else{
+					bestMoves[j]=moves[i];
+				}
+				//cout<<j<<endl;
+			}
+		}
+	}
+	delete [] moves;
+	return bestMoves;
+}
+//evaluates the position nonrecursively
+double Bitboard::evaluate(){
+	double evaluation=0;
+	for(int i=0;i<12;i++){
+		evaluation+=numPieces(bitbrds[i])*pieceValues[i];
+		evaluation+=.1*numPieces(pieceAttacks(i))*10/pieceValues[i];
+	}
+	return evaluation;
+}
+//evaluates the position up to a minimum depth of depth
+double Bitboard::evaluate(int depth){
+	if((depth==0&&!fireOnBoard())||depth<-2)
+		return evaluate();
+	int sideToMove=toMove();
+	double bestEvaluation=40*sideToMove*-1;
+	move_t* moves = allMoves();
+	for(int i=0;moves[i];i++){
+		move(moves[i]);
+		moves[i].changeEvaluation(evaluate(depth-1));
+		takeBack();
+	}
+	for(int i=0;moves[i];i++){
+		if (moves[i].getEvaluation()*sideToMove > bestEvaluation*sideToMove){
+			bestEvaluation = moves[i].getEvaluation();
+		}
+	}
+	delete [] moves;
+	return bestEvaluation;
 }
 string Bitboard::tostring(){
 	string s="";
