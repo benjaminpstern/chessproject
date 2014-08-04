@@ -96,6 +96,7 @@ uint64_t Bitboard::occupancySet(){
 	}
 	return occ;
 }
+//blackOrWhite is 0 if the piece is white or 1 if the piece is blacks
 uint64_t Bitboard::ownPieces(int blackOrWhite){
 	uint64_t set=0;
 	for(int i=myPieces(blackOrWhite);i<myPieces(blackOrWhite)+6;i++){
@@ -105,6 +106,7 @@ uint64_t Bitboard::ownPieces(int blackOrWhite){
 	}
 	return set;
 }
+//blackOrWhite is 0 if the piece is white or 1 if the piece is blacks
 uint64_t Bitboard::enemyPieces(int blackOrWhite){
 	uint64_t set=0;
 	for(int i=otherPieces(blackOrWhite);i<otherPieces(blackOrWhite)+6;i++){
@@ -112,6 +114,7 @@ uint64_t Bitboard::enemyPieces(int blackOrWhite){
 	}
 	return set;
 }
+//gives all the squares the pieces are attacking on board pieceIndex
 uint64_t Bitboard::pieceAttacks(int pieceIndex){
 	switch(pieceIndex){
 		case 0:
@@ -140,10 +143,83 @@ uint64_t Bitboard::pieceAttacks(int pieceIndex){
 			return kingAttacks(bitbrds[pieceIndex],1);
 	}
 }
+//gives all the squares the pieces are attacking on brd, using the type of piece referred to by pieceIndex
+uint64_t Bitboard::pieceAttacks(int pieceIndex, uint64_t brd){
+	switch(pieceIndex){
+		case 0:
+			return pawnAttacks(brd,0);
+		case 1:
+			return rookAttacks(brd,0);
+		case 2:
+			return knightAttacks(brd,0);
+		case 3:
+			return bishopAttacks(brd,0);
+		case 4:
+			return queenAttacks(brd,0);
+		case 5:
+			return kingAttacks(brd,0);
+		case 6:
+			return pawnAttacks(brd,1);
+		case 7:
+			return rookAttacks(brd,1);
+		case 8:
+			return knightAttacks(brd,1);
+		case 9:
+			return bishopAttacks(brd,1);
+		case 10:
+			return queenAttacks(brd,1);
+		case 11:
+			return kingAttacks(brd,1);
+	}
+}
 //return true if the move is legal, false otherwise
 bool Bitboard::isLegal(move_t m){
 	uint64_t newBoard=bitbrds[m.pieceMoved]&((uint64_t)1<<(m.x1*8+m.y1));
 	return ((uint64_t)1<<(m.x2*8+m.y2))&pieceAttacks(m.pieceMoved)&~ownPieces(m.pieceMoved/6);
+}
+/*
+ * pointer to null-terminated array of all legal moves in the position
+ */
+move_t* Bitboard::allMoves(){
+	int sideToMove=1;
+	if(plyNo%2==1) sideToMove=-1; //1 if white is to move, -1 if black is to move
+	move_t* moves = new move_t[250];
+	int moveno=0;
+	int i=0;
+	if(sideToMove<0) i=6;
+	int max=i+6;
+	for(;i<max;i++){
+		move_t* pieceMoves=allMoves(i);
+		for(int j=0;pieceMoves[j]!=0;j++){
+			moves[moveno]=pieceMoves[j];
+			moveno++;
+		}
+		delete [] pieceMoves;
+	}
+	moves[moveno]=0;
+	return moves;
+}
+move_t* Bitboard::allMoves(int pieceIndex){
+	uint64_t first=firstPiece(bitbrds[pieceIndex]);
+	uint64_t rest=restPieces(bitbrds[pieceIndex]);
+	uint64_t own = ownPieces(pieceIndex/6);
+	move_t* moves=new move_t[100];
+	int moveno=0;
+	while(first){
+		uint64_t pieceMoves=pieceAttacks(pieceIndex,first)&~own;
+		while(pieceMoves){
+			uint64_t firstMove=firstPiece(pieceMoves);
+			int x=xValue(firstMove);
+			int y=yValue(firstMove);
+			moves[moveno]=move_t(xValue(first),yValue(first),x,y,chars[pieceIndex],piece(x,y));
+			pieceMoves=restPieces(pieceMoves);
+			moveno++;
+		}
+		first=firstPiece(rest);
+		rest=restPieces(rest);
+	}
+	moves[moveno]=0;
+	return moves;
 }
 //make the move on the board, return true if successful
 bool Bitboard::move(move_t m){

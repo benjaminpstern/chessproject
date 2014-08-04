@@ -1,5 +1,6 @@
 #include <limits.h>
 #include <stdint.h>
+#include <string.h>
 typedef uint32_t uint;
 const int num_piece_types=13;
 const char piecemap[num_piece_types]={'P','R','N','B','Q','K','p','r','n','b','q','k','_'};//the characters mapped to numbers using an arr
@@ -27,6 +28,16 @@ public:
 	//pieceTaken should be '_' if no piece was taken
 	move_t(unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2, char pieceMoved, char pieceTaken);
 	move_t();
+	move_t(const int x){
+		memcpy(this,&x,sizeof(move_t));
+	}
+	operator int(){
+		return *(int*)this;
+	}
+	move_t& operator= (const int x) {
+		memcpy(this,&x,sizeof(move_t));
+		return *this;
+	}
 	uint getx1(){return x1;}//the x position of the original square. From 0 to 7
 	uint gety1(){return y1;}//the y position of the original square. From 0 to 7
 	uint getx2(){return x2;}//the x position of the new square. From 0 to 7

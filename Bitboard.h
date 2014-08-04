@@ -94,6 +94,33 @@ public:
 	void startPosition();
 	//return true if the move is legal, false otherwise
 	bool isLegal(move_t m);
+	/*
+	 * returns a pointer to an array of null-terminated move objects representing all the legal moves in that position
+	 */
+	move_t* allMoves();
+	/*
+	 * returns a pointer to an array of null-terminated move objects representing all the legal moves that can be made by the piece
+	 * represented by the int piece
+	 */
+	move_t* allMoves(int piece);
+	//get the x value of the square represented by the 1 bit in brd
+	int xValue(uint64_t brd){
+		int x=-1;
+		while(brd){
+			brd>>=8;
+			x++;
+		}
+		return x;
+	}
+	//get the y value of the square represented by the 1 bit in brd
+	int yValue(uint64_t brd){
+		int y=0;
+		while(brd&notFirstRank){
+			brd>>=1;
+			y++;
+		}
+		return y;
+	}
 	//make the move on the board, return true if successful
 	bool move(move_t m);
 	//take back the previous move, return true if successful
@@ -116,6 +143,7 @@ public:
 	uint64_t ownPieces(int blackOrWhite);
 	uint64_t enemyPieces(int blackOrWhite);
 	uint64_t pieceAttacks(int pieceIndex);
+	uint64_t pieceAttacks(int pieceIndex, uint64_t brd);
 	uint64_t knightAttacks(uint64_t brd,int blackOrWhite);
 	uint64_t pawnAttacks(uint64_t brd, int blackOrWhite);
 	uint64_t kingAttacks(uint64_t brd, int blackOrWhite);
