@@ -29,13 +29,13 @@ public:
 	move_t(unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2, char pieceMoved, char pieceTaken);
 	move_t();
 	move_t(const int x){
-		memcpy(this,&x,sizeof(move_t));
+		*(int*)this=x;
 	}
 	operator int(){
 		return *(int*)this;
 	}
 	move_t& operator= (const int x) {
-		memcpy(this,&x,sizeof(move_t));
+		*(int*)this=x;
 		return *this;
 	}
 	uint getx1(){return x1;}//the x position of the original square. From 0 to 7

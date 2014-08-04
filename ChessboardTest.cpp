@@ -31,6 +31,7 @@ int main(){
 		cout<<board;
 		board->takeBack();
 	}
+	delete [] moves;
 	//board->print_bitboard(board->occupancySet());
 	//board->print_bitboard((0x8040201008040201>>8)|(0x8040201008040201<<1));
 	/*uint64_t mask=1;
