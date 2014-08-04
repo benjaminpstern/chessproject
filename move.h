@@ -63,6 +63,7 @@ public:
 			evaluation=(int)(d*-100);
 		}
 		else
+			evaluation_sign=true;
 			evaluation=(int)(d*100);
 	}
 	char* tostring(){
