@@ -494,7 +494,7 @@ move_t* Bitboard::nBestMoves(int n){
 	move_t* bestMoves=new move_t[n];
 	for(int i=0;i<n;i++){
 		bestMoves[i].changeEvaluation(40*sideToMove*-1);
-		cout<<bestMoves[i].getEvaluation()*sideToMove<<endl;
+		//cout<<bestMoves[i].getEvaluation()*sideToMove<<endl;
 	}
 	move_t* moves = allMoves();
 	for(int i=0;moves[i]!=0;i++){
@@ -528,7 +528,7 @@ double Bitboard::evaluate(){
 	double evaluation=0;
 	for(int i=0;i<12;i++){
 		evaluation+=numPieces(bitbrds[i])*pieceValues[i];
-		evaluation+=.1*numPieces(pieceAttacks(i))*10/pieceValues[i];
+		evaluation+=.01*numPieces(pieceAttacks(i))*10/pieceValues[i];
 	}
 	return evaluation;
 }

@@ -51,7 +51,7 @@ public:
 		if(evaluation_sign)
 			return evaluation/100.0;
 		else 
-			return evaluation/100.0*-1;
+			return evaluation/(-100.0);
 	}
 	void changePieceMoved(char c){pieceMoved=indexPiece(c);};//change the piece moved. 
 	//															rnbqkpRNBQKP Don't put anything silly in there or there will be problems
@@ -59,8 +59,9 @@ public:
 	//															rnbqkpRNBQKP_ Don't put anything silly in there or there will be problems
 	void changeEvaluation(double d){//change the evaluation of the move. This is for use by the engine that is traversing the move tree.
 		if(d<0){
+			d=d*-1;
 			evaluation_sign=false;
-			evaluation=(int)(d*-100);
+			evaluation=(int)(d*100);
 		}
 		else
 			evaluation_sign=true;
