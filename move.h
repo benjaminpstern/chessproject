@@ -43,15 +43,19 @@ public:
 	uint gety1(){return y1;}//the y position of the original square. From 0 to 7
 	uint getx2(){return x2;}//the x position of the new square. From 0 to 7
 	uint gety2(){return y2;}//the y position of the new square. From 0 to 7
-	char getpieceMoved(){return piecemap[pieceMoved];}//the character representing the piece that was moved. rnbqkpRNBQKP
-	char getpieceTaken(){return piecemap[pieceTaken];}//the character representing the piece that was taken. 
+	char getPieceMoved(){return piecemap[pieceMoved];}//the character representing the piece that was moved. rnbqkpRNBQKP
+	char getPieceTaken(){return piecemap[pieceTaken];}//the character representing the piece that was taken. 
 	//													If none was taken then '_' rnbqkpRNBQKP_
 	double getEvaluation(){//Since evaluation must be stored as an int, cast it to a double and divide by 100.
 							//this allows for up to a .01 pawn difference between moves, which is more than enough
+		int eval=evaluation;
+		if(evaluation>30){
+			eval = 1000;
+		}
 		if(evaluation_sign)
-			return evaluation/100.0;
+			return eval/100.0;
 		else 
-			return evaluation/(-100.0);
+			return eval/(-100.0);
 	}
 	void changePieceMoved(char c){pieceMoved=indexPiece(c);};//change the piece moved. 
 	//															rnbqkpRNBQKP Don't put anything silly in there or there will be problems
@@ -67,9 +71,12 @@ public:
 			evaluation_sign=true;
 			evaluation=(int)(d*100);
 	}
+	bool isCapture(){
+		return pieceMoved!=12;
+	}
 	char* tostring(){
 		char* s=new char[100];
-		sprintf(s,"%d,%d to %d,%d a %c took a %c\n",this->getx1(),this->gety1(),this->getx2(), this->gety2(), this->getpieceMoved(),this->getpieceTaken());
+		sprintf(s,"%d,%d to %d,%d a %c took a %c\n",this->getx1(),this->gety1(),this->getx2(), this->gety2(), this->getPieceMoved(),this->getPieceTaken());
 		return s;
 	}
 } move_t;

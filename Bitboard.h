@@ -6,10 +6,11 @@
 #include "Chessboard.h"
 const uint64_t notFirstRank = 0xfefefefefefefefe; // ~0x0101010101010101
 const uint64_t notLastRank = 0x7f7f7f7f7f7f7f7f; // ~0x8080808080808080
-const uint64_t notFirstSecondRank = ~0x0202020202020202;
+const uint64_t notFirstSecondRank = ~0x0303030303030303;
 const uint64_t notTwoLastRanks = ~0xc0c0c0c0c0c0c0c0;
 const uint64_t a1h8Diagonal = 0x8040201008040201;
 const uint64_t a8h1Diagonal = 0x102040810204080;
+const uint64_t centralSquares = 0x0000001818000000;
 /*
  * a class for a representation of a chessboard that has 12 64-bit integers
  * representing the occupancy set for each type of piece.
@@ -25,6 +26,7 @@ private:
 	move_t* moveHistory;
 	//the number of plies(half moves) that have been played
 	int plyNo;
+	int nodesSearched;
 	//return a zero-terminated list of moves that must be checked through the isLegal() function
 	//before putting it in a list of legal moves
 	move_t* semiLegalMoves();
@@ -116,12 +118,13 @@ public:
 	int toMove();
 	//the amount of stuff that's hanging.
 	//If there's a lot of stuff hanging the program should go deeper to look for the right moves
-	int fireOnBoard();
+	int hangingPieces();
 	//should get an array with the n best moves.
 	move_t* nBestMoves(int n);
 	//evaluates the position recursively
 	double evaluate();
 	double evaluate(int depth);
+	double evaluate(int depth, int prevHanging);
 	//get the y value of the square represented by the 1 bit in brd
 	int yValue(uint64_t brd){
 		int y=0;

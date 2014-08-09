@@ -10,6 +10,7 @@ Bitboard::Bitboard(){
 	for(int i=0;i<num_piece_types;i++){
 		bitbrds[i]=0;
 	}
+	nodesSearched=0;
 	startPosition();
 	moveHistory=(move_t*)malloc(sizeof(move_t)*2048);
 	plyNo=0;
@@ -202,44 +203,77 @@ bool Bitboard::isLegal(move_t m){
 }
 /*
  * pointer to null-terminated array of all legal moves in the position
+ * the captures will be first and the rest of the moves will come afterward
  */
 move_t* Bitboard::allMoves(){
 	int sideToMove=toMove();
 	move_t* moves = new move_t[250];
+	move_t* nonCaptures = new move_t[250];
 	int moveno=0;
+	int nonCaptureNo=0;
 	int i=0;
 	if(sideToMove<0) i=6;
 	int max=i+6;
 	for(;i<max;i++){
 		move_t* pieceMoves=allMoves(i);
-		for(int j=0;pieceMoves[j]!=0;j++){
+		int j;
+		for(j=0;pieceMoves[j].getPieceTaken()!='_'&&pieceMoves[j]!=0;j++){
+			//cout<<j<<endl;
 			moves[moveno]=pieceMoves[j];
 			moveno++;
 		}
+		for(;pieceMoves[j]!=0;j++){
+			nonCaptures[nonCaptureNo]=pieceMoves[j];
+			nonCaptureNo++;
+		}
 		delete [] pieceMoves;
 	}
+	for(int j=0;j<nonCaptureNo;j++){
+		moves[moveno]=nonCaptures[j];
+		moveno++;
+	}
+	delete [] nonCaptures;
 	moves[moveno]=0;
 	return moves;
 }
+//returns the moves of a piece, with the captures first
 move_t* Bitboard::allMoves(int pieceIndex){
 	uint64_t first=firstPiece(bitbrds[pieceIndex]);
 	uint64_t rest=restPieces(bitbrds[pieceIndex]);
 	uint64_t own = ownPieces(pieceIndex/6);
-	move_t* moves=new move_t[100];
+	uint64_t enemy = enemyPieces(pieceIndex/6);
+	move_t* moves=new move_t[250];
+	move_t* nonCaptures = new move_t[250];
 	int moveno=0;
+	int nonCaptureNo=0;
 	while(first){
 		uint64_t pieceMoves=pieceAttacks(pieceIndex,first)&~own;
+		uint64_t pieceCaptures = enemy&pieceMoves;
+		pieceMoves &= ~enemy;
+		while(pieceCaptures){
+			uint64_t firstMove=firstPiece(pieceCaptures);
+			int x=xValue(firstMove);
+			int y=yValue(firstMove);
+			moves[moveno]=move_t(xValue(first),yValue(first),x,y,chars[pieceIndex],piece(x,y));
+			pieceCaptures=restPieces(pieceCaptures);
+			moveno++;
+		}
 		while(pieceMoves){
 			uint64_t firstMove=firstPiece(pieceMoves);
 			int x=xValue(firstMove);
 			int y=yValue(firstMove);
-			moves[moveno]=move_t(xValue(first),yValue(first),x,y,chars[pieceIndex],piece(x,y));
+			nonCaptures[nonCaptureNo]=move_t(xValue(first),yValue(first),x,y,chars[pieceIndex],'_');
 			pieceMoves=restPieces(pieceMoves);
-			moveno++;
+			nonCaptureNo++;
 		}
 		first=firstPiece(rest);
 		rest=restPieces(rest);
 	}
+	for(int i=0;i<nonCaptureNo;i++){
+		moves[moveno]=nonCaptures[i];
+		moveno++;
+	}
+	delete [] nonCaptures;
 	moves[moveno]=0;
 	return moves;
 }
@@ -462,7 +496,7 @@ uint64_t Bitboard::restPieces(uint64_t brd){
 }
 //the amount of stuff that's hanging.
 //If there's a lot of stuff hanging the program should go deeper to look for the right moves
-int Bitboard::fireOnBoard(){
+int Bitboard::hangingPieces(){
 	int sideToMove=toMove();
 	int blackOrWhite=0;
 	int enemyColor=1;
@@ -471,25 +505,26 @@ int Bitboard::fireOnBoard(){
 		blackOrWhite=1;
 		enemyColor=0;
 	} 
-	int fire=0;
+	int hanging=0;
 	for(int i=blackOrWhite*6;i<blackOrWhite*6+6;i++){
 		for(int j=enemyColor*6;j<enemyColor*6+6;j++){
 			uint64_t hanging = bitbrds[i]&pieceAttacks(j);
 			while(hanging){
 				uint64_t first=firstPiece(hanging);
-				fire+=pieceValues[i];
+				hanging+=pieceValues[i];
 				if(hanging&defense){
-					fire+=pieceValues[j];
+					hanging+=pieceValues[j];
 				}
 				hanging=restPieces(hanging);
 			}
 		}
-		//cout<<fire<<endl;
-		return fire;
+		//cout<<hanging<<endl;
+		return hanging;
 	}
 }
 //should get an array with the n best moves.
 move_t* Bitboard::nBestMoves(int n){
+	nodesSearched=0;
 	int sideToMove=toMove();
 	move_t* bestMoves=new move_t[n];
 	for(int i=0;i<n;i++){
@@ -499,9 +534,10 @@ move_t* Bitboard::nBestMoves(int n){
 	move_t* moves = allMoves();
 	for(int i=0;moves[i]!=0;i++){
 		move(moves[i]);
+		nodesSearched++;
 		//cout<<this;
 		move_t m=moves[i];
-		moves[i].changeEvaluation(evaluate(0));
+		moves[i].changeEvaluation(evaluate(1));
 		takeBack();
 		//cout<<this;
 	}
@@ -521,6 +557,7 @@ move_t* Bitboard::nBestMoves(int n){
 		}
 	}
 	delete [] moves;
+	cout<<"searched "<<nodesSearched<<" nodes"<<endl;
 	return bestMoves;
 }
 //evaluates the position nonrecursively
@@ -528,23 +565,60 @@ double Bitboard::evaluate(){
 	double evaluation=0;
 	for(int i=0;i<12;i++){
 		evaluation+=numPieces(bitbrds[i])*pieceValues[i];
-		evaluation+=.01*numPieces(pieceAttacks(i))*10/pieceValues[i];
+		if(i==0||i==6){
+			evaluation+=.01*numPieces((pieceAttacks(i)|bitbrds[i])&centralSquares);
+		}
+		else{
+			evaluation+=.01*numPieces(pieceAttacks(i))*10/pieceValues[i];
+		}
 	}
 	return evaluation;
 }
 //evaluates the position up to a minimum depth of depth
 double Bitboard::evaluate(int depth){
-	if((depth==0&&!fireOnBoard())||depth<-2)
-		return evaluate();
+	return evaluate(depth,0);
+}
+double Bitboard::evaluate(int depth, int prevHanging){
+	cout<<this;
+	double eval=evaluate();
+	int hanging=hangingPieces();
+	/*if(hanging){
+		cout<<hanging<<endl;
+		cout<<this;
+	}*/
+	if((depth<=0&&(eval-hanging+prevHanging)*eval>=0))//this says if there is less material to take than you are down, then it's probably bad
+		return eval;
 	int sideToMove=toMove();
 	double bestEvaluation=40*sideToMove*-1;
 	move_t* moves = allMoves();
-	for(int i=0;moves[i];i++){
+	int i;
+	double bestCaptureEval=40*sideToMove*-1;
+	for(i=0;moves[i].isCapture();i++){
 		move(moves[i]);
-		moves[i].changeEvaluation(evaluate(depth-1));
+		//cout<<this;
+		nodesSearched++;
+		if (hangingPieces()<prevHanging){
+			double newEval=evaluate();
+			if(newEval*sideToMove>bestCaptureEval*sideToMove){
+				bestCaptureEval=newEval;
+			}
+		}
+		/*cout<<"Checking position:"<<endl;
+		cout<<this;
+		cout<<moves[i].getEvaluation()<<endl;*/
 		takeBack();
 	}
-	for(int i=0;moves[i];i++){
+	if(bestCaptureEval*sideToMove>eval*sideToMove){
+		delete [] moves;
+		return bestCaptureEval;
+	}
+	for(;moves[i];i++){
+		move(moves[i]);
+		moves[i].changeEvaluation(evaluate(depth-1,hanging));
+		nodesSearched++;
+		takeBack();
+	}
+	for(i=0;moves[i];i++){
 		if (moves[i].getEvaluation()*sideToMove > bestEvaluation*sideToMove){
 			bestEvaluation = moves[i].getEvaluation();
 		}
