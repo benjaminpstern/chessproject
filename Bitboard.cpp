@@ -505,21 +505,21 @@ int Bitboard::hangingPieces(){
 		blackOrWhite=1;
 		enemyColor=0;
 	} 
-	int hanging=0;
+	int hangingValues=0;
 	for(int i=blackOrWhite*6;i<blackOrWhite*6+6;i++){
 		for(int j=enemyColor*6;j<enemyColor*6+6;j++){
 			uint64_t hanging = bitbrds[i]&pieceAttacks(j);
 			while(hanging){
 				uint64_t first=firstPiece(hanging);
-				hanging+=pieceValues[i];
+				hangingValues+=pieceValues[i];
 				if(hanging&defense){
-					hanging+=pieceValues[j];
+					hangingValues+=pieceValues[j];
 				}
 				hanging=restPieces(hanging);
 			}
 		}
 		//cout<<hanging<<endl;
-		return hanging;
+		return hangingValues;
 	}
 }
 //should get an array with the n best moves.
@@ -537,7 +537,7 @@ move_t* Bitboard::nBestMoves(int n){
 		nodesSearched++;
 		//cout<<this;
 		move_t m=moves[i];
-		moves[i].changeEvaluation(evaluate(1));
+		moves[i].changeEvaluation(evaluate(2));
 		takeBack();
 		//cout<<this;
 	}
@@ -575,47 +575,48 @@ double Bitboard::evaluate(){
 	return evaluation;
 }
 //evaluates the position up to a minimum depth of depth
+
 double Bitboard::evaluate(int depth){
-	return evaluate(depth,0);
-}
-double Bitboard::evaluate(int depth, int prevHanging){
-	cout<<this;
+	if(bitbrds[5]==0) return -40;
+	if(bitbrds[11]==0) return 40;
+	//cout<<this<<endl<<depth<<endl;
 	double eval=evaluate();
 	int hanging=hangingPieces();
-	/*if(hanging){
-		cout<<hanging<<endl;
-		cout<<this;
-	}*/
-	if((depth<=0&&(eval-hanging+prevHanging)*eval>=0))//this says if there is less material to take than you are down, then it's probably bad
+	if(depth<1){
 		return eval;
+	}
 	int sideToMove=toMove();
 	double bestEvaluation=40*sideToMove*-1;
 	move_t* moves = allMoves();
-	int i;
-	double bestCaptureEval=40*sideToMove*-1;
+	int i=0;
+	/*double bestCaptureEval=40*sideToMove*-1;
 	for(i=0;moves[i].isCapture();i++){
 		move(moves[i]);
-		//cout<<this;
 		nodesSearched++;
-		if (hangingPieces()<prevHanging){
-			double newEval=evaluate();
-			if(newEval*sideToMove>bestCaptureEval*sideToMove){
-				bestCaptureEval=newEval;
-			}
+		if(nodesSearched%10000==0){
+			cout<<"searching node "<<nodesSearched<<endl;
+			cout<<"depth is "<<depth<<endl;
+			cout<<this;
 		}
-		/*cout<<"Checking position:"<<endl;
-		cout<<this;
-		cout<<moves[i].getEvaluation()<<endl;*/
+		double newEval=evaluate(depth);
+		if(newEval*sideToMove>bestCaptureEval*sideToMove){
+			bestCaptureEval=newEval;
+		}
 		takeBack();
 	}
-	if(bestCaptureEval*sideToMove>eval*sideToMove){
+	if(bestCaptureEval*sideToMove>eval*sideToMove+1){
 		delete [] moves;
 		return bestCaptureEval;
-	}
+	}*/
 	for(;moves[i];i++){
 		move(moves[i]);
-		moves[i].changeEvaluation(evaluate(depth-1,hanging));
+		moves[i].changeEvaluation(evaluate(depth-1));
 		nodesSearched++;
+		if(nodesSearched%10000==0){
+			cout<<"searching node "<<nodesSearched<<endl;
+			//cout<<"depth is "<<depth<<endl;
+			//cout<<this;
+		}
 		takeBack();
 	}
 	for(i=0;moves[i];i++){

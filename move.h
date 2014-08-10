@@ -72,7 +72,7 @@ public:
 			evaluation=(int)(d*100);
 	}
 	bool isCapture(){
-		return pieceMoved!=12;
+		return pieceTaken!=12;
 	}
 	char* tostring(){
 		char* s=new char[100];
