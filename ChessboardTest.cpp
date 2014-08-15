@@ -13,6 +13,7 @@ void testMove1(){
 	board->move(m2);
 	board->move(m3);
 	cout<<board;
+	board->print_bitboard(board->pieceAttacks(4));
 	for(int i=0;i<3;i++){
 		board->takeBack();
 	}
@@ -27,6 +28,17 @@ void testBestMoves(){
 		board->move(moves[0]);
 		move_t m=moves[0];
 		cout<<board;
+	}
+	delete board;
+}
+void testBestMoves1(){
+	Bitboard* board=new Bitboard();
+	cout<<board;
+	move_t* moves=board->allMoves();
+	for(int i=0;moves[i];i++){
+		board->move(moves[i]);
+		cout<<board;
+		board->takeBack();
 	}
 	delete board;
 }

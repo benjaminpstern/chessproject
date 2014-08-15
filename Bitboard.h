@@ -30,6 +30,8 @@ private:
 	//return a zero-terminated list of moves that must be checked through the isLegal() function
 	//before putting it in a list of legal moves
 	move_t* semiLegalMoves();
+	bool isCheck();
+	bool isCheckmate();
 	//returns the index of the board that represents the presence of character c
 	//or -1 if the character doesn't represent a piece
 	int boardIndex(char c);
@@ -125,6 +127,11 @@ public:
 	double evaluate();
 	double evaluate(int depth);
 	double evaluate(int depth, int prevHanging);
+	//return the value for the evaluation of the position using the alpha beta pruning evaluation
+	double alphaBeta(double alpha, double beta, int depth);
+	//goes to the end of all checks and check evasions and some captures. makes sure the position is stable before 
+	//evaluating it.
+	double quiesce(double alpha, double beta);
 	//get the y value of the square represented by the 1 bit in brd
 	int yValue(uint64_t brd){
 		int y=0;

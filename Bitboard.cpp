@@ -201,6 +201,49 @@ bool Bitboard::isLegal(move_t m){
 	uint64_t newBoard=bitbrds[m.pieceMoved]&((uint64_t)1<<(m.x1*8+m.y1));
 	return ((uint64_t)1<<(m.x2*8+m.y2))&pieceAttacks(m.pieceMoved)&~ownPieces(m.pieceMoved/6);
 }
+bool Bitboard::isCheck(){
+	return ((bitbrds[5]&enemyPieceAttacks[0])|(bitbrds[11]&enemyPieceAttacks[1]))!=0;
+}
+bool Bitboard::isCheckmate(){
+	//if both of the kings can move somewhere, it's not checkmate.
+	//this relies on the kingAttacks function to generate taboo squares correctly.
+	if(pieceAttacks(5)!=0&&pieceAttacks(11)!=0){
+		return false;
+	}
+	int cpn=0;//the checking pieces number, or the number of pieces that have been added to checkingPieces
+	int checkingPiece;
+	//searching the white pieces to see if any of them can attack the king
+	for(int i=0;i<5;i++){
+		if (pieceAttacks(i)&bitbrds[11]){
+			checkingPiece=i;
+			cpn++;
+		}
+		if(cpn==2){
+			return true;
+		}
+	}
+	if(cpn==0){
+		for(int i=6;i<11;i++){
+			if (pieceAttacks(i)&bitbrds[5]){
+				checkingPiece=i;
+				cpn++;
+			}
+			if(cpn==2){
+				return true;//if it's double check, we've already made sure the king can't move anywhere
+				//so it must be checkmate
+			}
+		}
+		if(cpn==0){
+			return false;
+		}
+		//at this point white must be in check.
+		
+	}
+	else{//white must be checking black
+		
+	}
+
+}
 /*
  * pointer to null-terminated array of all legal moves in the position
  * the captures will be first and the rest of the moves will come afterward
@@ -390,6 +433,17 @@ uint64_t Bitboard::kingAttacks(uint64_t brd, int blackOrWhite){
 	for(int i=otherPieces(blackOrWhite);i<otherPieces(blackOrWhite)+5;i++){//to exclude the enemy king
 		taboo|=pieceAttacks(i);
 	}
+	uint64_t otherKing=bitbrds[((blackOrWhite+1)%2)*6+5];
+	uint64_t otherKingMoves=0;
+	otherKingMoves|=(otherKing<<1)&notFirstRank;
+	otherKingMoves|=(otherKing>>1)&notLastRank;
+	otherKingMoves|=(otherKing<<7)&notLastRank;
+	otherKingMoves|=(otherKing>>7)&notFirstRank;
+	otherKingMoves|=(otherKing<<8);
+	otherKingMoves|=(otherKing>>8);
+	otherKingMoves|=(otherKing<<9)&notFirstRank;
+	otherKingMoves|=(otherKing>>9)&notLastRank;
+	taboo|=otherKingMoves;
 	uint64_t mask=((uint64_t)1<<(2*(CHAR_BIT)))|((uint64_t)1<<(6*(CHAR_BIT)));
 	mask|=mask<<7;
 	uint64_t betweenSquares=0x0081810081810000;
@@ -558,6 +612,7 @@ move_t* Bitboard::nBestMoves(int n){
 	}
 	delete [] moves;
 	cout<<"searched "<<nodesSearched<<" nodes"<<endl;
+	cout<<"evaluation is now "<<bestMoves[0].getEvaluation()<<endl;
 	return bestMoves;
 }
 //evaluates the position nonrecursively
@@ -589,7 +644,7 @@ double Bitboard::evaluate(int depth){
 	double bestEvaluation=40*sideToMove*-1;
 	move_t* moves = allMoves();
 	int i=0;
-	/*double bestCaptureEval=40*sideToMove*-1;
+	double bestCaptureEval=40*sideToMove*-1;
 	for(i=0;moves[i].isCapture();i++){
 		move(moves[i]);
 		nodesSearched++;
@@ -607,15 +662,13 @@ double Bitboard::evaluate(int depth){
 	if(bestCaptureEval*sideToMove>eval*sideToMove+1){
 		delete [] moves;
 		return bestCaptureEval;
-	}*/
+	}
 	for(;moves[i];i++){
 		move(moves[i]);
 		moves[i].changeEvaluation(evaluate(depth-1));
 		nodesSearched++;
 		if(nodesSearched%10000==0){
 			cout<<"searching node "<<nodesSearched<<endl;
-			//cout<<"depth is "<<depth<<endl;
-			//cout<<this;
 		}
 		takeBack();
 	}
