@@ -31,7 +31,10 @@ private:
 	//before putting it in a list of legal moves
 	move_t* semiLegalMoves();
 	bool isCheck();
+	bool isInCheck(int blackOrWhite);
 	bool isCheckmate();
+	int checkingPieceIndex(int blackOrWhite);
+	uint64_t squaresToKing(int blackOrWhite);
 	//returns the index of the board that represents the presence of character c
 	//or -1 if the character doesn't represent a piece
 	int boardIndex(char c);

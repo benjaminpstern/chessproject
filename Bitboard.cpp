@@ -202,47 +202,78 @@ bool Bitboard::isLegal(move_t m){
 	return ((uint64_t)1<<(m.x2*8+m.y2))&pieceAttacks(m.pieceMoved)&~ownPieces(m.pieceMoved/6);
 }
 bool Bitboard::isCheck(){
-	return ((bitbrds[5]&enemyPieceAttacks[0])|(bitbrds[11]&enemyPieceAttacks[1]))!=0;
+	return isInCheck(true)||isInCheck(false);
+}
+bool Bitboard::isInCheck(int white){
+	if(!white)
+		return bitbrds[5]&enemyPieceAttacks[0]!=0;
+	return bitbrds[11]&enemyPieceAttacks[1]!=0;
 }
 bool Bitboard::isCheckmate(){
-	//if both of the kings can move somewhere, it's not checkmate.
-	//this relies on the kingAttacks function to generate taboo squares correctly.
-	if(pieceAttacks(5)!=0&&pieceAttacks(11)!=0){
-		return false;
-	}
-	int cpn=0;//the checking pieces number, or the number of pieces that have been added to checkingPieces
-	int checkingPiece;
-	//searching the white pieces to see if any of them can attack the king
-	for(int i=0;i<5;i++){
-		if (pieceAttacks(i)&bitbrds[11]){
-			checkingPiece=i;
-			cpn++;
-		}
-		if(cpn==2){
-			return true;
-		}
-	}
-	if(cpn==0){
-		for(int i=6;i<11;i++){
-			if (pieceAttacks(i)&bitbrds[5]){
-				checkingPiece=i;
-				cpn++;
+	return allMoves()[0]==0&&isCheck();
+}
+int Bitboard::checkingPieceIndex(int blackOrWhite){
+	uint64_t king=bitbrds[blackOrWhite*6+5];
+	int otherSide=(blackOrWhite+1)%2;
+	int index=-1;
+	for(int i=otherSide*6;i<otherSide*6+5;i++){
+		if(pieceAttacks(i)&king){
+			if(index!=-1){
+				return -1;
 			}
-			if(cpn==2){
-				return true;//if it's double check, we've already made sure the king can't move anywhere
-				//so it must be checkmate
+			index=i;
+		}
+	}
+	return index;
+}
+uint64_t squaresToKing(int blackOrWhite){
+	int checkingPiece=checkingPieceIndex(blackOrWhite);
+	uint64_t king=bitbrds[5+6*blackOrWhite];
+	uint64_t cPiece=bitbrds[checkingPiece];
+	uint64_t firstCheckingPiece;
+	switch(checkingPiece-6*blackOrWhite){
+	case 0:
+		return cPiece&pawnAttacks(king,blackOrWhite)&~(king>>1)&~(king<<1)&~(king<<2)&~(king>>2);
+	case 1:
+		uint64_t attacks;
+		while(cPiece){
+			firstCheckingPiece=firstPiece(cPiece);
+			attacks=rookAttacks(firstCheckingPiece,(blackOrWhite+1)%2)
+			if(attacks&king){
+				return (rookAttacks(king,blackOrWhite)&attacks)|firstCheckingPiece;
 			}
+			cPiece=restPieces(cPiece);
 		}
-		if(cpn==0){
-			return false;
+	case 2:
+		while(cPiece){
+			firstCheckingPiece=firstPiece(cPiece);
+			if(knightAttacks(firstCheckingPiece,(blackOrWhite+1)%2)&king){
+				return firstCheckingPiece;
+			}
+			cPiece=restPieces(cPiece);
 		}
-		//at this point white must be in check.
-		
+	case 3:
+		uint64_t attacks;
+		while(cPiece){
+			firstCheckingPiece=firstPiece(cPiece);
+			attacks=bishopAttacks(firstCheckingPiece,(blackOrWhite+1)%2)
+			if(attacks&king){
+				return (bishopAttacks(king,blackOrWhite)&attacks)|firstCheckingPiece;
+			}
+			cPiece=restPieces(cPiece);
+		}
+	case 4:
+		uint64_t attacks;
+		while(cPiece){
+			firstCheckingPiece=firstPiece(cPiece);
+			attacks=QueenAttacks(firstCheckingPiece,(blackOrWhite+1)%2)
+			if(attacks&king){
+				return (QueenAttacks(king,blackOrWhite)&attacks)|firstCheckingPiece;
+			}
+			cPiece=restPieces(cPiece);
+		}
 	}
-	else{//white must be checking black
-		
-	}
-
+	return 0;
 }
 /*
  * pointer to null-terminated array of all legal moves in the position
@@ -379,6 +410,9 @@ uint64_t Bitboard::knightAttacks(uint64_t brd,int blackOrWhite){
 	newSquares|=(brd<<15)& notLastRank;
 	newSquares|=(brd<<17)& notFirstRank;
 	newSquares|=(brd>>17)& notLastRank;
+	if(isInCheck(blackOrWhite)){
+		newSquares&=squaresToKing(blackOrWhite);
+	}
 	//newSquares&=(~ownPieces(blackOrWhite));
 	return newSquares;
 }
@@ -411,7 +445,11 @@ uint64_t Bitboard::pawnAttacks(uint64_t brd, int blackOrWhite){
 	}
 	pushSquares &=(~occupancySet());
 	takeSquares &= occupancySet();
-	return pushSquares|takeSquares;
+	uint64_t newSquares=pushSquares|takeSquares;
+	if(isInCheck(blackOrWhite)){
+		newSquares&=squaresToKing(blackOrWhite);
+	}
+	return newSquares;
 }
 uint64_t Bitboard::kingAttacks(uint64_t brd, int blackOrWhite){
 	uint64_t newSquares=0;
@@ -491,6 +529,9 @@ uint64_t Bitboard::rookAttacks(uint64_t brd, int blackOrWhite){
 	//uint64_t rankAttacks=(((occ&ranksOccupied)-(brd<<1))^reverse(reverse(occ&ranksOccupied)-(reverse(brd)<<1)))&ranksOccupied;
 	newSquares|=fileAttacks;
 	newSquares|=rankAttacks;
+	if(isInCheck(blackOrWhite)){
+		newSquares&=squaresToKing(blackOrWhite);
+	}
 	return newSquares;
 }
 /*
@@ -536,11 +577,18 @@ uint64_t Bitboard::bishopAttacks(uint64_t brd, int blackOrWhite){
 		forward ^= byteSwap(rev);
 		newSquares |= (forward & lineMask2);
 	}
+	if(isInCheck(blackOrWhite)){
+		newSquares&=squaresToKing(blackOrWhite);
+	}
 	return newSquares;
 	
 }
 uint64_t Bitboard::queenAttacks(uint64_t brd, int blackOrWhite){
-	return rookAttacks(brd, blackOrWhite) | bishopAttacks(brd,blackOrWhite);
+	uint64_t newSquares=rookAttacks(brd, blackOrWhite) | bishopAttacks(brd,blackOrWhite);
+	if(isInCheck(blackOrWhite)){
+		newSquares&=squaresToKing(blackOrWhite);
+	}
+	return newSquares;
 }
 uint64_t Bitboard::firstPiece(uint64_t brd){
 	return brd & -brd;

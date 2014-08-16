@@ -10,6 +10,12 @@ public:
 	virtual void startPosition()=0;
 	//tell if a move is legal
 	virtual bool isLegal(move_t m)=0;
+	//true if one side is in check, otherwise false
+	virtual bool isCheck()=0;
+	//true if one side is in checkmate, otherwise false
+	virtual bool isCheckmate()=0;
+	//true if the game is a draw by stalemate, three move repetition, insufficient material, or 50 move rule, otherwise false
+	virtual bool isDraw()=0;
 	//actually move the piece, returns true if successful
 	virtual bool move(move_t m)=0;
 	//take back the move, return true if successful
