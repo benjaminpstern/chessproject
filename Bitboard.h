@@ -22,6 +22,10 @@ private:
 	//a uint64_t is 8 bytes, enough for 64 squares.
 	//this array should be of size 12.
 	uint64_t* bitbrds;
+	//should also be size 12.
+	uint64_t* pieceAttackBrds;
+	uint64_t squaresToWhiteKing;
+	uint64_t squaresToBlackKing;
 	//a history of all the moves that have been played.
 	move_t* moveHistory;
 	//the number of plies(half moves) that have been played
@@ -30,11 +34,10 @@ private:
 	//return a zero-terminated list of moves that must be checked through the isLegal() function
 	//before putting it in a list of legal moves
 	move_t* semiLegalMoves();
-	bool isCheck();
-	bool isInCheck(int blackOrWhite);
-	bool isCheckmate();
+	
 	int checkingPieceIndex(int blackOrWhite);
 	uint64_t squaresToKing(int blackOrWhite);
+	uint64_t squaresToKingRecalc(int blackorWhite);
 	//returns the index of the board that represents the presence of character c
 	//or -1 if the character doesn't represent a piece
 	int boardIndex(char c);
@@ -100,6 +103,11 @@ public:
 	//set up the start position
 	void startPosition();
 	//return true if the move is legal, false otherwise
+	void recalculatePieceAttacks();
+	bool isCheck();
+	bool isInCheck(int blackOrWhite);
+	bool isCheckmate();
+	bool isDraw();
 	bool isLegal(move_t m);
 	/*
 	 * returns a pointer to an array of null-terminated move objects representing all the legal moves in that position
@@ -178,6 +186,7 @@ public:
 	uint64_t enemyPieces(int blackOrWhite);
 	uint64_t pieceAttacks(int pieceIndex);
 	uint64_t pieceAttacks(int pieceIndex, uint64_t brd);
+	uint64_t pieceAttacksRecalc(int pieceIndex);
 	uint64_t enemyPieceAttacks(int blackOrWhite);
 	uint64_t ownPieceAttacks(int blackOrWhite);
 	uint64_t knightAttacks(uint64_t brd,int blackOrWhite);

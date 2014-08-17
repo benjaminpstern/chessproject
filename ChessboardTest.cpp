@@ -42,7 +42,27 @@ void testBestMoves1(){
 	}
 	delete board;
 }
+void testCheck(){
+	Bitboard* board=new Bitboard();
+	cout<<board;
+	move_t m1(4,1,4,3,'P','_');
+	move_t m2(3,6,3,4,'p','_');
+	move_t m3(5,0,1,4,'B','_');
+	board->move(m1);
+	board->move(m2);
+	board->move(m3);
+	cout<<board;
+	board->print_bitboard(board->pieceAttacks(3));
+	cout<<board->isInCheck(1)<<endl;
+	move_t* moves=board->allMoves();
+	for(int i=0;moves[i];i++){
+		board->move(moves[i]);
+		cout<<board;
+		board->takeBack();
+	}
+	delete board;
+}
 int main(){
-	testBestMoves();
+	testCheck();
 	return 0;
 }
