@@ -1,7 +1,6 @@
 
 #include "Bitboard.h"
 #define num_piece_types 12
-#define numMoves 1024
 #define plyNo moveHistory.size()
 const char chars[num_piece_types]={'P','R','N','B','Q','K','p','r','n','b','q','k'};
 const int pieceValues[num_piece_types]={1,5,3,3,9,40,-1,-5,-3,-3,-9,-40};
@@ -316,6 +315,46 @@ uint64_t Bitboard::squaresToKing(int blackOrWhite){
 	return squaresToBlackKing;
 }
 bool Bitboard::isDraw(){
+	std::vector<move_t>* movesPtr=allMoves();
+	if(movesPtr->size()==0&&!isCheck()){
+		delete movesPtr;
+		return true;
+	}
+	delete movesPtr;
+	uint64_t originalPieceLocations[12];
+	for(int i=0;i<12;i++){
+		originalPieceLocations[i]=bitbrds[i];
+	}
+	uint64_t pieceLocations[12];
+	for(int i=0;i<12;i++){
+		pieceLocations[i]=bitbrds[i];
+	}
+	std::vector<move_t>::reverse_iterator rit=moveHistory.rbegin();
+	int numMoves = 0;
+	while(rit!=moveHistory.rend()){
+		if(numMoves>=50){
+			return true;
+		}
+		move_t m=*rit;
+		char pieceMoved = m.getPieceMoved();
+		char pieceTaken = m.getPieceTaken();
+		if(pieceMoved=='p'||pieceMoved=='P'||pieceTaken!='_'){
+			return false;
+		}
+		pieceLocations[pieceMoved]&=~((uint64_t)1<<(m.x1*8+m.y1));//turn off the bit that the piece moved from
+		pieceLocations[pieceMoved]|=((uint64_t)1<<(m.x2*8+m.y2));//turn on the place that the piece moved to
+		bool repetition=true;
+		for(int i=0;i<12;i++){
+			if(originalPieceLocations[i]!=pieceLocations[i]){
+				repetition=false;
+			}
+		}
+		if(repetition){
+			return true;
+		}
+		++rit;
+		numMoves++;
+	}
 	return false;
 }
 /*
