@@ -27,13 +27,12 @@ private:
 	uint64_t squaresToWhiteKing;
 	uint64_t squaresToBlackKing;
 	//a history of all the moves that have been played.
-	move_t* moveHistory;
+	std::vector<move_t> moveHistory;
 	//the number of plies(half moves) that have been played
-	int plyNo;
 	int nodesSearched;
 	//return a zero-terminated list of moves that must be checked through the isLegal() function
 	//before putting it in a list of legal moves
-	move_t* semiLegalMoves();
+	std::vector<move_t> semiLegalMoves();
 	
 	int checkingPieceIndex(int blackOrWhite);
 	uint64_t squaresToKing(int blackOrWhite);
@@ -100,7 +99,7 @@ public:
 	int deoccupy(int index, uint x, uint y);
 	//gives a zero-terminated list of legal moves.
 	//delete it when done with it.
-	move_t* legalMoves();
+	std::vector<move_t> legalMoves();
 	//set up the start position
 	void startPosition();
 	//return true if the move is legal, false otherwise
@@ -113,12 +112,12 @@ public:
 	/*
 	 * returns a pointer to an array of null-terminated move objects representing all the legal moves in that position
 	 */
-	move_t* allMoves();
+	std::vector<move_t>* allMoves();
 	/*
 	 * returns a pointer to an array of null-terminated move objects representing all the legal moves that can be made by the piece
 	 * represented by the int piece
 	 */
-	move_t* allMoves(int piece);
+	std::vector<move_t>* allMoves(int piece);
 	//get the x value of the square represented by the 1 bit in brd
 	int xValue(uint64_t brd){
 		int x=-1;
@@ -134,7 +133,7 @@ public:
 	//If there's a lot of stuff hanging the program should go deeper to look for the right moves
 	int hangingPieces();
 	//should get an array with the n best moves.
-	move_t* nBestMoves(int n);
+	std::vector<move_t>* nBestMoves(int n);
 	//evaluates the position recursively
 	double evaluate();
 	double evaluate(int depth);
@@ -172,7 +171,7 @@ public:
 	//gets the value of the piece on that square
 	int pieceValue(int,int);
 	//return a zero-terminated list of all moves that have been played in the game.
-	move_t* getMoveHistory();
+	std::vector<move_t> getMoveHistory();
 	/*
 	 * the following set methods generate 64 bit integers that represent movement sets and occupancy sets.
 	 * occupancySet, ownPieces, enemyPieces are occupancy sets of all pieces and pieces of a specific color

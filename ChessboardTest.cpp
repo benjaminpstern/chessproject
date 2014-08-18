@@ -24,22 +24,26 @@ void testBestMoves(){
 	Bitboard* board=new Bitboard();
 	cout<<board;
 	for(int i=0;i<20;i++){
-		move_t* moves=board->nBestMoves(1);
+		vector<move_t>* movesPtr=board->nBestMoves(1);
+		vector<move_t> moves=*movesPtr;
 		board->move(moves[0]);
 		move_t m=moves[0];
 		cout<<board;
+		delete movesPtr;
 	}
 	delete board;
 }
 void testBestMoves1(){
 	Bitboard* board=new Bitboard();
 	cout<<board;
-	move_t* moves=board->allMoves();
-	for(int i=0;moves[i];i++){
+	vector<move_t>* movesPtr=board->allMoves();
+	vector<move_t> moves=*movesPtr;
+	for(int i=0;i<moves.size();i++){
 		board->move(moves[i]);
 		cout<<board;
 		board->takeBack();
 	}
+	delete movesPtr;
 	delete board;
 }
 void testCheck(){
@@ -58,13 +62,14 @@ void testCheck(){
 	cout<<board;
 	board->print_bitboard(board->pieceAttacks(9));
 	cout<<board->isInCheck(1)<<endl;
-	move_t* moves=board->allMoves();
-	for(int i=0;moves[i];i++){
+	vector<move_t>* movesPtr=board->allMoves();
+	vector<move_t> moves=*movesPtr;
+	for(int i=0;i<moves.size();i++){
 		board->move(moves[i]);
 		cout<<board;
 		board->takeBack();
 	}
-	delete [] moves;
+	delete movesPtr;
 	delete board;
 }
 void testCheck2(){
@@ -82,13 +87,14 @@ void testCheck2(){
 	cout<<board;
 	board->print_bitboard(board->pieceAttacks(4));
 	cout<<board->isCheckmate()<<endl;
-	move_t* moves=board->allMoves();
-	for(int i=0;moves[i];i++){
+	vector<move_t>* movesPtr=board->allMoves();
+	vector<move_t> moves=*movesPtr;
+	for(int i=0;i<moves.size();i++){
 		board->move(moves[i]);
 		cout<<board;
 		board->takeBack();
 	}
-	delete [] moves;
+	delete movesPtr;
 	delete board;
 }
 void testCheck3(){
@@ -112,13 +118,14 @@ void testCheck3(){
 	cout<<board;
 	board->print_bitboard(board->pieceAttacks(4));
 	cout<<board->isCheckmate()<<endl;
-	move_t* moves=board->allMoves();
-	for(int i=0;moves[i];i++){
+	vector<move_t>* movesPtr=board->allMoves();
+	vector<move_t> moves=*movesPtr;
+	for(int i=0;i<moves.size();i++){
 		board->move(moves[i]);
 		cout<<board;
 		board->takeBack();
 	}
-	delete [] moves;
+	delete movesPtr;
 	delete board;
 }
 int main(){

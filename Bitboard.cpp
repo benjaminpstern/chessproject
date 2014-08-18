@@ -2,6 +2,7 @@
 #include "Bitboard.h"
 #define num_piece_types 12
 #define numMoves 1024
+#define plyNo moveHistory.size()
 const char chars[num_piece_types]={'P','R','N','B','Q','K','p','r','n','b','q','k'};
 const int pieceValues[num_piece_types]={1,5,3,3,9,40,-1,-5,-3,-3,-9,-40};
 const move_t nullMove;
@@ -14,9 +15,6 @@ Bitboard::Bitboard(){
 	nodesSearched=0;
 	startPosition();
 	recalculatePieceAttacks();
-	moveHistory=(move_t*)malloc(sizeof(move_t)*2048);
-	plyNo=0;
-	moveHistory[plyNo]=nullMove;
 }
 //1 if white is to move, -1 if black is to move
 int Bitboard::toMove(){
@@ -240,7 +238,10 @@ bool Bitboard::isInCheck(int blackOrWhite){
 	return bitbrds[11]&enemyPieceAttacks(1);
 }
 bool Bitboard::isCheckmate(){
-	return allMoves()[0]==0&&isCheck();
+	std::vector<move_t>* moves=allMoves();
+	bool sizeIsZero=moves->size()==0;
+	delete moves;
+	return sizeIsZero&&isCheck();
 }
 int Bitboard::checkingPieceIndex(int blackOrWhite){
 	uint64_t king=bitbrds[blackOrWhite*6+5];
@@ -321,47 +322,39 @@ bool Bitboard::isDraw(){
  * pointer to null-terminated array of all legal moves in the position
  * the captures will be first and the rest of the moves will come afterward
  */
-move_t* Bitboard::allMoves(){
+std::vector<move_t>* Bitboard::allMoves(){
 	int sideToMove=toMove();
-	move_t* moves = new move_t[250];
-	move_t* nonCaptures = new move_t[250];
-	int moveno=0;
-	int nonCaptureNo=0;
+	std::vector<move_t>* moves = new std::vector<move_t>();
+	std::vector<move_t> nonCaptures;
 	int i=0;
 	if(sideToMove<0) i=6;
 	int max=i+6;
 	for(;i<max;i++){
-		move_t* pieceMoves=allMoves(i);
+		std::vector<move_t>* pieceMovesPtr=allMoves(i);
+		std::vector<move_t> pieceMoves=*pieceMovesPtr;
 		int j;
-		for(j=0;pieceMoves[j].getPieceTaken()!='_'&&pieceMoves[j]!=0;j++){
+		for(j=0;j<pieceMoves.size()&&pieceMoves[j].getPieceTaken()!='_';j++){
 			//cout<<j<<endl;
-			moves[moveno]=pieceMoves[j];
-			moveno++;
+			moves->push_back(pieceMoves[j]);
 		}
-		for(;pieceMoves[j]!=0;j++){
-			nonCaptures[nonCaptureNo]=pieceMoves[j];
-			nonCaptureNo++;
+		for(;j<pieceMoves.size();j++){
+			nonCaptures.push_back(pieceMoves[j]);
 		}
-		delete [] pieceMoves;
+		delete pieceMovesPtr;
 	}
-	for(int j=0;j<nonCaptureNo;j++){
-		moves[moveno]=nonCaptures[j];
-		moveno++;
+	for(int j=0;j<nonCaptures.size();j++){
+		moves->push_back(nonCaptures[j]);
 	}
-	delete [] nonCaptures;
-	moves[moveno]=0;
 	return moves;
 }
 //returns the moves of a piece, with the captures first
-move_t* Bitboard::allMoves(int pieceIndex){
+std::vector<move_t>* Bitboard::allMoves(int pieceIndex){
 	uint64_t first=firstPiece(bitbrds[pieceIndex]);
 	uint64_t rest=restPieces(bitbrds[pieceIndex]);
 	uint64_t own = ownPieces(pieceIndex/6);
 	uint64_t enemy = enemyPieces(pieceIndex/6);
-	move_t* moves=new move_t[250];
-	move_t* nonCaptures = new move_t[250];
-	int moveno=0;
-	int nonCaptureNo=0;
+	std::vector<move_t>* moves=new std::vector<move_t>();
+	std::vector<move_t> nonCaptures;
 	while(first){
 		uint64_t pieceMoves=pieceAttacks(pieceIndex,first)&~own;
 		uint64_t pieceCaptures = enemy&pieceMoves;
@@ -370,27 +363,22 @@ move_t* Bitboard::allMoves(int pieceIndex){
 			uint64_t firstMove=firstPiece(pieceCaptures);
 			int x=xValue(firstMove);
 			int y=yValue(firstMove);
-			moves[moveno]=move_t(xValue(first),yValue(first),x,y,chars[pieceIndex],piece(x,y));
+			moves->push_back(move_t(xValue(first),yValue(first),x,y,chars[pieceIndex],piece(x,y)));
 			pieceCaptures=restPieces(pieceCaptures);
-			moveno++;
 		}
 		while(pieceMoves){
 			uint64_t firstMove=firstPiece(pieceMoves);
 			int x=xValue(firstMove);
 			int y=yValue(firstMove);
-			nonCaptures[nonCaptureNo]=move_t(xValue(first),yValue(first),x,y,chars[pieceIndex],'_');
+			nonCaptures.push_back(move_t(xValue(first),yValue(first),x,y,chars[pieceIndex],'_'));
 			pieceMoves=restPieces(pieceMoves);
-			nonCaptureNo++;
 		}
 		first=firstPiece(rest);
 		rest=restPieces(rest);
 	}
-	for(int i=0;i<nonCaptureNo;i++){
-		moves[moveno]=nonCaptures[i];
-		moveno++;
+	for(int i=0;i<nonCaptures.size();i++){
+		moves->push_back(nonCaptures[i]);
 	}
-	delete [] nonCaptures;
-	moves[moveno]=0;
 	return moves;
 }
 //make the move on the board, return true if successful
@@ -400,16 +388,14 @@ bool Bitboard::move(move_t m){
 	if(m.pieceTaken!=12){
 		bitbrds[m.pieceTaken]&=~(uint64_t)0^((uint64_t)1<<(m.x2*8+m.y2));//turn off the place where the piece got taken
 	}
-	moveHistory[plyNo]=m;
-	plyNo++;
-	moveHistory[plyNo]=0;
+	moveHistory.push_back(m);
 	recalculatePieceAttacks();
 	return true;
 }
 //take back the previous move, return true if successful
 bool Bitboard::takeBack(){
-	plyNo--;
-	move_t m=moveHistory[plyNo];
+	move_t m=moveHistory.back();
+	moveHistory.pop_back();
 	bitbrds[m.pieceMoved] |= ((uint64_t)1<<(m.x1*8+m.y1));
 	bitbrds[m.pieceMoved] &= ~((uint64_t)1<<(m.x2*8+m.y2));
 	if(m.pieceTaken!=12){
@@ -417,7 +403,6 @@ bool Bitboard::takeBack(){
 	}
 
 	//cout<<plyNo<<endl;
-	moveHistory[plyNo]=0;
 	recalculatePieceAttacks();
 	return true;
 }
@@ -441,7 +426,7 @@ int Bitboard::pieceValue(int x,int y){
 	return 0;
 }
 //return a zero-terminated list of all moves that have been played in the game.
-move_t* Bitboard::getMoveHistory(){
+std::vector<move_t> Bitboard::getMoveHistory(){
 	return moveHistory;
 }
 uint64_t Bitboard::knightAttacks(uint64_t brd,int blackOrWhite){
@@ -826,15 +811,17 @@ int Bitboard::hangingPieces(){
 	}
 }
 //should get an array with the n best moves.
-move_t* Bitboard::nBestMoves(int n){
+std::vector<move_t>* Bitboard::nBestMoves(int n){
 	nodesSearched=0;
 	int sideToMove=toMove();
-	move_t* bestMoves=new move_t[n];
+	std::vector<move_t>* bestMovesPtr=new std::vector<move_t>();
+	std::vector<move_t> bestMoves=*bestMovesPtr;
 	for(int i=0;i<n;i++){
 		bestMoves[i].changeEvaluation(40*sideToMove*-1);
 		//cout<<bestMoves[i].getEvaluation()*sideToMove<<endl;
 	}
-	move_t* moves = allMoves();
+	std::vector<move_t>* movesPtr = allMoves();
+	std::vector<move_t> moves = *movesPtr;
 	for(int i=0;moves[i]!=0;i++){
 		move(moves[i]);
 		nodesSearched++;
@@ -859,10 +846,10 @@ move_t* Bitboard::nBestMoves(int n){
 			}
 		}
 	}
-	delete [] moves;
+	delete movesPtr;
 	cout<<"searched "<<nodesSearched<<" nodes"<<endl;
 	cout<<"evaluation is now "<<bestMoves[0].getEvaluation()<<endl;
-	return bestMoves;
+	return bestMovesPtr;
 }
 //evaluates the position nonrecursively
 double Bitboard::evaluate(){
@@ -891,7 +878,8 @@ double Bitboard::evaluate(int depth){
 	}
 	int sideToMove=toMove();
 	double bestEvaluation=40*sideToMove*-1;
-	move_t* moves = allMoves();
+	std::vector<move_t>* movesPtr = allMoves();
+	std::vector<move_t> moves = *movesPtr;
 	int i=0;
 	double bestCaptureEval=40*sideToMove*-1;
 	for(i=0;moves[i].isCapture();i++){
@@ -909,7 +897,7 @@ double Bitboard::evaluate(int depth){
 		takeBack();
 	}
 	if(bestCaptureEval*sideToMove>eval*sideToMove+1){
-		delete [] moves;
+		delete movesPtr;
 		return bestCaptureEval;
 	}
 	for(;moves[i];i++){
@@ -926,7 +914,7 @@ double Bitboard::evaluate(int depth){
 			bestEvaluation = moves[i].getEvaluation();
 		}
 	}
-	delete [] moves;
+	delete &moves;
 	return bestEvaluation;
 }
 string Bitboard::tostring(){
@@ -968,7 +956,6 @@ void Bitboard::print_binary(uint64_t brd){
 	cout<<endl;
 }
 Bitboard::~Bitboard(){
-	free(moveHistory);
 	delete [] bitbrds;
 	delete [] pieceAttackBrds;
 }
