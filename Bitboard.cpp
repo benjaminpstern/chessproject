@@ -443,6 +443,13 @@ move_t* Bitboard::getMoveHistory(){
 }
 uint64_t Bitboard::knightAttacks(uint64_t brd,int blackOrWhite){
 	uint64_t newSquares=0;
+	int sideToMove=toMove();
+	if((sideToMove==1&&blackOrWhite==0)||(sideToMove==-1&&blackOrWhite==1)){
+		uint64_t filePinned=filePins(blackOrWhite)&brd;
+		brd ^= filePinned;
+		uint64_t diagPinned=diagPins(blackOrWhite)&brd;
+		brd ^= diagPinned;
+	}
 	newSquares|=(brd>>6) & notFirstSecondRank;
 	newSquares|=(brd<<6) & notTwoLastRanks;
 	newSquares|=(brd<<10)& notFirstSecondRank;
@@ -451,10 +458,63 @@ uint64_t Bitboard::knightAttacks(uint64_t brd,int blackOrWhite){
 	newSquares|=(brd<<15)& notLastRank;
 	newSquares|=(brd<<17)& notFirstRank;
 	newSquares|=(brd>>17)& notLastRank;
+	print_bitboard(newSquares);
 	//newSquares&=(~ownPieces(blackOrWhite));
 	return newSquares;
 }
 uint64_t Bitboard::pawnAttacks(uint64_t brd, int blackOrWhite){
+	uint64_t pushSquares=0;//the squares where the pawn would be pushing
+	uint64_t takeSquares=0;//the squares where the pawn would be taking
+	int forward=1;
+	if(blackOrWhite>0){
+		forward=-1;
+	}
+	uint64_t filePinned=0;
+	uint64_t diagPinned=0;
+	int sideToMove=toMove();
+	if((sideToMove==1&&blackOrWhite==0)||(sideToMove==-1&&blackOrWhite==1)){
+		filePinned=filePins(blackOrWhite)&brd;
+		brd ^= filePinned;
+		diagPinned=diagPins(blackOrWhite)&brd;
+		brd ^= diagPinned;
+	}
+	uint64_t mask=rank(3);
+	if(forward==-1)
+		mask<<=1;
+	if(forward==1){
+		pushSquares|=brd<<1;
+		takeSquares|=brd<<(1+CHAR_BIT);
+		takeSquares|=brd>>(CHAR_BIT-1);
+		uint64_t doublePush=(brd<<2)&mask;
+		uint64_t occ=occupancySet();
+		pushSquares|=(doublePush&(~occ&~(occ<<1)));
+		//print_bitboard((~occ&~(occ<<1)));
+	}
+	else{
+		pushSquares|=brd>>1;
+		takeSquares|=brd>>(1+CHAR_BIT);
+		takeSquares|=brd<<(CHAR_BIT-1);
+		uint64_t doublePush=(brd>>2)&mask;
+		uint64_t occ=occupancySet();
+		pushSquares|=(doublePush&(~occ&~(occ>>1)));
+	}
+	pushSquares &=(~occupancySet());
+	takeSquares &= occupancySet();
+	uint64_t newSquares=pushSquares|takeSquares;
+	uint64_t king = bitbrds[blackOrWhite*6+5];
+	while(diagPinned){
+		uint64_t first=firstPiece(diagPinned);
+		newSquares|=(pawnAttacksBypassPins(first,blackOrWhite)&diagPinMask(first,king));
+		diagPinned=restPieces(diagPinned);
+	}
+	while(filePinned){
+		uint64_t first=firstPiece(filePinned);
+		newSquares|=(pawnAttacksBypassPins(first,blackOrWhite)&filePinMask(first,king));
+		filePinned=restPieces(filePinned);
+	}
+	return newSquares;
+}
+uint64_t Bitboard::pawnAttacksBypassPins(uint64_t brd, int blackOrWhite){
 	uint64_t pushSquares=0;//the squares where the pawn would be pushing
 	uint64_t takeSquares=0;//the squares where the pawn would be taking
 	int forward=1;
@@ -530,8 +590,63 @@ uint64_t Bitboard::kingAttacks(uint64_t brd, int blackOrWhite){
 	return newSquares;
 }
 uint64_t Bitboard::rookAttacks(uint64_t brd, int blackOrWhite){
+	return rookAttacks(brd,occupancySet(),blackOrWhite);
+}
+uint64_t Bitboard::rookAttacks(uint64_t brd, uint64_t occ, int blackOrWhite){
 	uint64_t newSquares=0;
-	uint64_t occ=occupancySet();
+	int sideToMove=toMove();
+	uint64_t filePinned=0;
+	uint64_t diagPinned=0;
+	if((sideToMove==1&&blackOrWhite==0)||(sideToMove==-1&&blackOrWhite==1)){
+		filePinned=filePins(blackOrWhite)&brd;
+		brd ^= filePinned;
+		diagPinned=diagPins(blackOrWhite)&brd;
+		brd ^= diagPinned;
+	}
+	uint64_t rooks=brd;
+	uint64_t rankAttacks=0;
+	uint64_t filesOccupied=~0;
+	//uint64_t ranksOccupied=~0;
+	for(int i=0;i<8;i++){
+		uint64_t f=file(i);
+		uint64_t r=rank(i);
+		if(!(f&rooks)){
+			filesOccupied&=~f;
+		}
+		/*if(!(r&rooks)){
+			ranksOccupied&=~r;
+		}*/	
+	}
+	//print_bitboard(ranksOccupied);
+	while(rooks){
+		uint64_t rook=firstPiece(rooks);
+		rooks = restPieces(rooks);
+		uint64_t rookRank=rank(0);
+		while(!(rookRank&rook)){
+			rookRank<<=1;
+		}
+		//print_bitboard(rookRank);
+		//print_bitboard(occ&rookRank);
+		//print_bitboard((occ&rookRank)-(brd<<1));
+		rankAttacks|=(((occ&rookRank)-(rook<<1))^occ)&rookRank;
+		rankAttacks|=((occ-(rook<<1))^reverse(reverse(occ&rookRank)-(reverse(rook)<<1)))&rookRank;
+	}
+	uint64_t fileAttacks=((occ-(brd<<1))^reverse(reverse(occ)-(reverse(brd)<<1)))&filesOccupied;
+	//brd=restPieces(brd);
+	//uint64_t rankAttacks=(((occ&ranksOccupied)-(brd<<1))^reverse(reverse(occ&ranksOccupied)-(reverse(brd)<<1)))&ranksOccupied;
+	newSquares|=fileAttacks;
+	newSquares|=rankAttacks;
+	uint64_t king=bitbrds[6*blackOrWhite+5];
+	while(filePinned){
+		uint64_t first = firstPiece(filePinned);
+		newSquares|=(rookAttacksBypassPins(first,occ,blackOrWhite)&filePinMask(first,king));
+		filePinned=restPieces(filePinned);
+	}
+	return newSquares;
+}
+uint64_t Bitboard::rookAttacksBypassPins(uint64_t brd, uint64_t occ, int blackOrWhite){
+	uint64_t newSquares=0;
+	int sideToMove=toMove();
 	uint64_t rooks=brd;
 	uint64_t rankAttacks=0;
 	uint64_t filesOccupied=~0;
@@ -567,29 +682,28 @@ uint64_t Bitboard::rookAttacks(uint64_t brd, int blackOrWhite){
 	newSquares|=rankAttacks;
 	return newSquares;
 }
-/*
-U64 diagonalAttacks(U64 occ, int sqOfSlider) {
-   U64 forward, reverse, slider, lineMask;
- 
-   lineMask = diagonalMaskEx[sqOfSlider]; // excludes square of slider
-   slider   = singleBitboard[sqOfSlider]; // single bit 1 << sq, 2^sq
- 
-   forward  = occ & lineMask; // also performs the first subtraction by clearing the s in o
-   reverse  = byteswap( forward ); // o'-s'
-   forward -=         ( slider  ); // o -2s
-   reverse -= byteswap( slider  ); // o'-2s'
-   forward ^= byteswap( reverse );
-   return forward & lineMask;      // mask the line again
-}
-*/
 uint64_t Bitboard::bishopAttacks(uint64_t brd, int blackOrWhite){
+	return bishopAttacks(brd, occupancySet(),blackOrWhite);
+}
+/*
+ *
+ */
+uint64_t Bitboard::bishopAttacks(uint64_t brd, uint64_t occ, int blackOrWhite){
 	uint64_t newSquares = 0;
 	uint64_t forward;
 	uint64_t rev;
+	uint64_t attacks;
+	uint64_t filePinned=0;
+	uint64_t diagPinned=0;
+	int sideToMove=toMove();
+	if((sideToMove==1&&blackOrWhite==0)||(sideToMove==-1&&blackOrWhite==1)){
+		filePinned=filePins(blackOrWhite)&brd;
+		brd ^= filePinned;
+		diagPinned=diagPins(blackOrWhite)&brd;
+	}
 	uint64_t lineMask1;
 	uint64_t lineMask2;
 	uint64_t bishop;
-	uint64_t occ = occupancySet();
 	uint64_t bishops=brd;
 	while(bishops){
 		//print_bitboard(bishops);
@@ -608,15 +722,72 @@ uint64_t Bitboard::bishopAttacks(uint64_t brd, int blackOrWhite){
 		forward -= bishop;
 		rev -= byteSwap(bishop);
 		forward ^= byteSwap(rev);
-		newSquares |= (forward & lineMask2);
+		attacks = (forward & lineMask2);
+		if(bishop&diagPinned){
+			attacks&=diagPinMask(bishop,bitbrds[6*blackOrWhite+5]);
+		}
+		newSquares|=attacks;
 	}
 	//cout<<1<<endl;
 	return newSquares;
 	
 }
-uint64_t Bitboard::queenAttacks(uint64_t brd, int blackOrWhite){
-	uint64_t newSquares=rookAttacks(brd, blackOrWhite) | bishopAttacks(brd,blackOrWhite);
+uint64_t Bitboard::queenAttacks(uint64_t brd, uint64_t occ, int blackOrWhite){
+	uint64_t newSquares=rookAttacks(brd, occ, blackOrWhite) | bishopAttacks(brd, occ, blackOrWhite);
 	return newSquares;
+}
+uint64_t Bitboard::queenAttacks(uint64_t brd,int blackOrWhite){
+	return queenAttacks(brd,occupancySet(),blackOrWhite);
+}
+uint64_t Bitboard::filePins(int blackOrWhite){
+	uint64_t king=bitbrds[blackOrWhite*6+5];
+	int notBlackOrWhite=(blackOrWhite+1)%2;
+	uint64_t occ=occupancySet();
+	uint64_t pieces=ownPieces(blackOrWhite)&(~king);
+	uint64_t pinners = bitbrds[notBlackOrWhite*6+1]|bitbrds[notBlackOrWhite*6+4];
+	uint64_t first;
+	uint64_t pinned=0;
+	uint64_t checkers=pinners;
+	while(checkers){
+		first=firstPiece(checkers);
+		if((rookAttacks(first,occ,notBlackOrWhite)&king)){
+			pinners^=first;
+		}
+		checkers=restPieces(checkers);
+	}
+	while(pieces){
+		first=firstPiece(pieces);
+		pieces=restPieces(pieces);
+		if(rookAttacks(pinners,occ&(~first),notBlackOrWhite)&king){
+			pinned |= first;
+		}
+	}
+	return pinned;
+}
+uint64_t Bitboard::diagPins(int blackOrWhite){
+	uint64_t king=bitbrds[blackOrWhite*6+5];
+	int notBlackOrWhite=(blackOrWhite+1)%2;
+	uint64_t occ=occupancySet();
+	uint64_t pieces=ownPieces(blackOrWhite)&(~king);
+	uint64_t pinners = bitbrds[notBlackOrWhite*6+3]|bitbrds[notBlackOrWhite*6+4];
+	uint64_t first;
+	uint64_t pinned=0;
+	uint64_t checkers=pinners;
+	while(checkers){
+		first=firstPiece(checkers);
+		if((bishopAttacks(first,occ,notBlackOrWhite)&king)){
+			pinners^=first;
+		}
+		checkers=restPieces(checkers);
+	}
+	while(pieces){
+		first=firstPiece(pieces);
+		pieces=restPieces(pieces);
+		if(bishopAttacks(pinners,occ&(~first),notBlackOrWhite)&king){
+			pinned |= first;
+		}
+	}
+	return pinned;
 }
 uint64_t Bitboard::firstPiece(uint64_t brd){
 	return brd & -brd;

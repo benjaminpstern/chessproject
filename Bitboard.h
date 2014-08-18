@@ -44,6 +44,7 @@ private:
 	uint64_t reverseBits(unsigned char c){
 		return (uint64_t)((c * 0x0202020202ULL & 0x010884422010ULL) % 1023);
 	}
+	uint64_t pawnAttacksBypassPins(uint64_t brd, int blackOrWhite);
 	//reverses the bits of a 64 bit integer
 	uint64_t reverse(uint64_t toReverse){
 		unsigned char inByte0 = (toReverse & 0xFF);
@@ -193,8 +194,14 @@ public:
 	uint64_t pawnAttacks(uint64_t brd, int blackOrWhite);
 	uint64_t kingAttacks(uint64_t brd, int blackOrWhite);
 	uint64_t rookAttacks(uint64_t brd, int blackOrWhite);
+	uint64_t rookAttacks(uint64_t brd, uint64_t occ, int blackOrWhite);
+	uint64_t rookAttacksBypassPins(uint64_t brd, uint64_t occ, int blackOrWhite);
 	uint64_t bishopAttacks(uint64_t brd, int blackOrWhite);
+	uint64_t bishopAttacks(uint64_t brd, uint64_t occ, int blackOrWhite);
 	uint64_t queenAttacks(uint64_t brd, int blackOrWhite);
+	uint64_t queenAttacks(uint64_t brd, uint64_t occ, int blackOrWhite);
+	uint64_t diagPins(int blackOrWhite);
+	uint64_t filePins(int blackOrWhite);
 	uint64_t firstPiece(uint64_t brd);
 	uint64_t restPieces(uint64_t brd);
 	uint64_t file(int n){
@@ -202,6 +209,29 @@ public:
 	}
 	uint64_t rank(int n){
 		return 0x0101010101010101<<n;
+	}
+	//a mask that has the file and rank of square
+	uint64_t filePinMask(uint64_t pinnedPiece, uint64_t king){
+		uint64_t myRank=0x0101010101010101;
+		uint64_t myFile=0xFF00000000000000;
+		uint64_t mask;
+		while(!pinnedPiece&myFile&&myFile){
+			myFile>>=8;
+		}
+		while(!pinnedPiece&myRank&&myRank!=0x0101010101010100){
+			myRank<<=1;
+		}
+		mask=myFile|myRank;
+		myRank=0x0101010101010101;
+		myFile=0xFF00000000000000;
+		while(!king&myFile&&myFile){
+			myFile>>=8;
+		}
+		while(!king&myRank&&myRank!=0x0101010101010100){
+			myRank<<=1;
+		}
+		mask&=(myFile|myRank);
+		return mask;
 	}
 	//returns a diagonal mask excluding the square on square.
 	//the diagonal will go up and right if right is true, otherwise up and left
@@ -236,6 +266,12 @@ public:
 		}
 		return mask^square;
 
+	}
+	uint64_t diagPinMask(uint64_t pinnedPiece, uint64_t king){
+		uint64_t mask;
+		mask=diagonalMask(pinnedPiece,true)|diagonalMask(pinnedPiece,false);
+		mask&=(diagonalMask(king,true)|diagonalMask(king,false));
+		return mask;
 	}
 	/*
 	 * These are print methods for debugging and testing purposes
