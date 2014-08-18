@@ -128,7 +128,32 @@ void testCheck3(){
 	delete movesPtr;
 	delete board;
 }
+void testDraw(){
+	Bitboard* board=new Bitboard();
+	cout<<board;
+	int moveno=0;
+	while(!board->isDraw()&&!board->isCheckmate()){
+		vector<move_t>* movesPtr=board->allMoves();
+		board->move((*movesPtr)[0]);
+		cout<<board;
+		//cout<<moveno<<endl;
+		moveno++;
+		//board->print_bitboard(board->pieceAttacks(8));
+		delete movesPtr;
+	}
+	if(board->isDraw()){
+		cout<<"DRAW"<<endl;
+	}
+	if(board->isCheckmate()){
+		if(board->isInCheck(0))
+			cout<<"BLACK WINS"<<endl;
+		else
+			cout<<"WHITE WINS"<<endl;
+	}
+	delete board;
+
+}
 int main(){
-	testCheck3();
+	testDraw();
 	return 0;
 }

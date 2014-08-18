@@ -299,9 +299,13 @@ uint64_t Bitboard::squaresToKingRecalc(int blackOrWhite){
 	case 4:
 		while(cPiece){
 			firstCheckingPiece=firstPiece(cPiece);
-			attacks=queenAttacks(firstCheckingPiece,(blackOrWhite+1)%2);
+			attacks=rookAttacks(firstCheckingPiece,(blackOrWhite+1)%2);
 			if(attacks&king){
-				return (queenAttacks(king,blackOrWhite)&attacks)|firstCheckingPiece;
+				return (rookAttacks(king,blackOrWhite)&attacks)|firstCheckingPiece;
+			}
+			attacks=bishopAttacks(firstCheckingPiece,(blackOrWhite+1)%2);
+			if(attacks&king){
+				return (bishopAttacks(king,blackOrWhite)&attacks)|firstCheckingPiece;
 			}
 			cPiece=restPieces(cPiece);
 		}
@@ -315,6 +319,9 @@ uint64_t Bitboard::squaresToKing(int blackOrWhite){
 	return squaresToBlackKing;
 }
 bool Bitboard::isDraw(){
+	if(numPieces(occupancySet())<3){
+		return true;
+	}
 	std::vector<move_t>* movesPtr=allMoves();
 	if(movesPtr->size()==0&&!isCheck()){
 		delete movesPtr;
@@ -331,6 +338,7 @@ bool Bitboard::isDraw(){
 	}
 	std::vector<move_t>::reverse_iterator rit=moveHistory.rbegin();
 	int numMoves = 0;
+	int numReps = 1;
 	while(rit!=moveHistory.rend()){
 		if(numMoves>=50){
 			return true;
@@ -341,8 +349,10 @@ bool Bitboard::isDraw(){
 		if(pieceMoved=='p'||pieceMoved=='P'||pieceTaken!='_'){
 			return false;
 		}
-		pieceLocations[pieceMoved]&=~((uint64_t)1<<(m.x1*8+m.y1));//turn off the bit that the piece moved from
-		pieceLocations[pieceMoved]|=((uint64_t)1<<(m.x2*8+m.y2));//turn on the place that the piece moved to
+		int pieceMovedInt=m.pieceMoved;
+		pieceLocations[pieceMovedInt]&=~((uint64_t)1<<(m.x2*8+m.y2));//turn off the bit that the piece moved to
+		pieceLocations[pieceMovedInt]|=((uint64_t)1<<(m.x1*8+m.y1));//turn on the place that the piece moved from
+
 		bool repetition=true;
 		for(int i=0;i<12;i++){
 			if(originalPieceLocations[i]!=pieceLocations[i]){
@@ -350,7 +360,9 @@ bool Bitboard::isDraw(){
 			}
 		}
 		if(repetition){
-			return true;
+			numReps++;
+			if(numReps>2)
+				return true;
 		}
 		++rit;
 		numMoves++;
