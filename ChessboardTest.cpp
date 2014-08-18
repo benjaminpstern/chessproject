@@ -56,7 +56,7 @@ void testCheck(){
 	board->move(m4);
 	board->move(m5);
 	cout<<board;
-	board->print_bitboard(board->pieceAttacks(3));
+	board->print_bitboard(board->pieceAttacks(9));
 	cout<<board->isInCheck(1)<<endl;
 	move_t* moves=board->allMoves();
 	for(int i=0;moves[i];i++){
@@ -122,6 +122,6 @@ void testCheck3(){
 	delete board;
 }
 int main(){
-	testCheck();
+	testCheck3();
 	return 0;
 }

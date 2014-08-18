@@ -258,6 +258,9 @@ int Bitboard::checkingPieceIndex(int blackOrWhite){
 }
 uint64_t Bitboard::squaresToKingRecalc(int blackOrWhite){
 	int checkingPiece = checkingPieceIndex(blackOrWhite);
+	if(checkingPiece==-1){
+		return 0xFFFFFFFFFFFFFFFF;
+	}
 	uint64_t king = bitbrds[5+6*blackOrWhite];
 	uint64_t cPiece = bitbrds[checkingPiece];
 	uint64_t firstCheckingPiece;
@@ -458,7 +461,6 @@ uint64_t Bitboard::knightAttacks(uint64_t brd,int blackOrWhite){
 	newSquares|=(brd<<15)& notLastRank;
 	newSquares|=(brd<<17)& notFirstRank;
 	newSquares|=(brd>>17)& notLastRank;
-	print_bitboard(newSquares);
 	//newSquares&=(~ownPieces(blackOrWhite));
 	return newSquares;
 }
