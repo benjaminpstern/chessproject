@@ -602,8 +602,19 @@ uint64_t Bitboard::kingAttacks(uint64_t brd, int blackOrWhite){
 	//}
 	//cout<<1<<endl;
 	//newSquares&=~(ownPieces(blackOrWhite));
-	for(int i=otherPieces(blackOrWhite);i<otherPieces(blackOrWhite)+5;i++){//to exclude the enemy king
-		taboo|=pieceAttacks(i);
+	int notBlackOrWhite=otherPieces(blackOrWhite);
+	for(int i=notBlackOrWhite;i<notBlackOrWhite+5;i++){//to exclude the enemy king
+		if(i==notBlackOrWhite+1||i==notBlackOrWhite+3||i==notBlackOrWhite+4){
+			if(i==notBlackOrWhite+1)
+				taboo|=rookAttacks(bitbrds[i],occ&~brd,notBlackOrWhite);
+			else if(i == notBlackOrWhite+3)
+				taboo|=bishopAttacks(bitbrds[i],occ&~brd,notBlackOrWhite);
+			else if(i==notBlackOrWhite+4)
+				taboo|=queenAttacks(bitbrds[i],occ&~brd,notBlackOrWhite);
+		}
+		else{
+			taboo|=pieceAttacks(i);
+		}
 	}
 	uint64_t otherKing=bitbrds[((blackOrWhite+1)%2)*6+5];
 	uint64_t otherKingMoves=0;

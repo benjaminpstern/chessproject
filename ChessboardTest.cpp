@@ -136,6 +136,9 @@ void testDraw(){
 		vector<move_t>* movesPtr=board->allMoves();
 		board->move((*movesPtr)[0]);
 		cout<<board;
+		if(board->isInCheck(1)){
+			board->print_bitboard(board->pieceAttacks(11));
+		}
 		//cout<<moveno<<endl;
 		moveno++;
 		//board->print_bitboard(board->pieceAttacks(8));
