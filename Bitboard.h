@@ -191,6 +191,7 @@ public:
 	uint64_t ownPieceAttacks(int blackOrWhite);
 	uint64_t knightAttacks(uint64_t brd,int blackOrWhite);
 	uint64_t pawnAttacks(uint64_t brd, int blackOrWhite);
+	uint64_t pawnAttacks(uint64_t brd, uint64_t occ, int blackOrWhite);
 	uint64_t kingAttacks(uint64_t brd, int blackOrWhite);
 	uint64_t rookAttacks(uint64_t brd, int blackOrWhite);
 	uint64_t rookAttacks(uint64_t brd, uint64_t occ, int blackOrWhite);

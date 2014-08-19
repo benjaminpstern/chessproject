@@ -501,6 +501,9 @@ uint64_t Bitboard::knightAttacks(uint64_t brd,int blackOrWhite){
 	return newSquares;
 }
 uint64_t Bitboard::pawnAttacks(uint64_t brd, int blackOrWhite){
+	return pawnAttacks(brd,occupancySet(),blackOrWhite);
+}
+uint64_t Bitboard::pawnAttacks(uint64_t brd, uint64_t occ, int blackOrWhite){
 	uint64_t pushSquares=0;//the squares where the pawn would be pushing
 	uint64_t takeSquares=0;//the squares where the pawn would be taking
 	int forward=1;
@@ -524,7 +527,6 @@ uint64_t Bitboard::pawnAttacks(uint64_t brd, int blackOrWhite){
 		takeSquares|=brd<<(1+CHAR_BIT);
 		takeSquares|=brd>>(CHAR_BIT-1);
 		uint64_t doublePush=(brd<<2)&mask;
-		uint64_t occ=occupancySet();
 		pushSquares|=(doublePush&(~occ&~(occ<<1)));
 		//print_bitboard((~occ&~(occ<<1)));
 	}
@@ -536,8 +538,8 @@ uint64_t Bitboard::pawnAttacks(uint64_t brd, int blackOrWhite){
 		uint64_t occ=occupancySet();
 		pushSquares|=(doublePush&(~occ&~(occ>>1)));
 	}
-	pushSquares &=(~occupancySet());
-	takeSquares &= occupancySet();
+	pushSquares &=(~occ);
+	takeSquares &= occ;
 	uint64_t newSquares=pushSquares|takeSquares;
 	uint64_t king = bitbrds[blackOrWhite*6+5];
 	while(diagPinned){
@@ -559,6 +561,7 @@ uint64_t Bitboard::pawnAttacksBypassPins(uint64_t brd, int blackOrWhite){
 	if(blackOrWhite>0){
 		forward=-1;
 	}
+	uint64_t occ=occupancySet();
 	uint64_t mask=rank(3);
 	if(forward==-1)
 		mask<<=1;
@@ -567,7 +570,6 @@ uint64_t Bitboard::pawnAttacksBypassPins(uint64_t brd, int blackOrWhite){
 		takeSquares|=brd<<(1+CHAR_BIT);
 		takeSquares|=brd>>(CHAR_BIT-1);
 		uint64_t doublePush=(brd<<2)&mask;
-		uint64_t occ=occupancySet();
 		pushSquares|=(doublePush&(~occ&~(occ<<1)));
 		//print_bitboard((~occ&~(occ<<1)));
 	}
@@ -576,11 +578,11 @@ uint64_t Bitboard::pawnAttacksBypassPins(uint64_t brd, int blackOrWhite){
 		takeSquares|=brd>>(1+CHAR_BIT);
 		takeSquares|=brd<<(CHAR_BIT-1);
 		uint64_t doublePush=(brd>>2)&mask;
-		uint64_t occ=occupancySet();
+		uint64_t occ=occ;
 		pushSquares|=(doublePush&(~occ&~(occ>>1)));
 	}
-	pushSquares &=(~occupancySet());
-	takeSquares &= occupancySet();
+	pushSquares &=(~occ);
+	takeSquares &= occ;
 	uint64_t newSquares=pushSquares|takeSquares;
 	//print_bitboard(brd);
 	return newSquares;
@@ -604,8 +606,10 @@ uint64_t Bitboard::kingAttacks(uint64_t brd, int blackOrWhite){
 	//newSquares&=~(ownPieces(blackOrWhite));
 	int notBlackOrWhite=otherPieces(blackOrWhite);
 	for(int i=notBlackOrWhite;i<notBlackOrWhite+5;i++){//to exclude the enemy king
-		if(i==notBlackOrWhite+1||i==notBlackOrWhite+3||i==notBlackOrWhite+4){
-			if(i==notBlackOrWhite+1)
+		if(i==notBlackOrWhite||i==notBlackOrWhite+1||i==notBlackOrWhite+3||i==notBlackOrWhite+4){
+			if(i==notBlackOrWhite)
+				taboo|=pawnAttacks(bitbrds[i],0xFFFFFFFFFFFFFFFF,notBlackOrWhite);
+			else if(i==notBlackOrWhite+1)
 				taboo|=rookAttacks(bitbrds[i],occ&~brd,notBlackOrWhite);
 			else if(i == notBlackOrWhite+3)
 				taboo|=bishopAttacks(bitbrds[i],occ&~brd,notBlackOrWhite);
