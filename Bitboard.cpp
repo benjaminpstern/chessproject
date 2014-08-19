@@ -4,7 +4,7 @@
 #define plyNo moveHistory.size()
 const char chars[num_piece_types]={'P','R','N','B','Q','K','p','r','n','b','q','k'};
 const int pieceValues[num_piece_types]={1,5,3,3,9,40,-1,-5,-3,-3,-9,-40};
-const move_t nullMove;
+const move_t nullMove=0;
 Bitboard::Bitboard(){
 	bitbrds=new uint64_t [num_piece_types];
 	pieceAttackBrds=new uint64_t [num_piece_types];
@@ -370,12 +370,13 @@ bool Bitboard::isDraw(){
 	return false;
 }
 /*
- * pointer to null-terminated array of all legal moves in the position
- * the captures will be first and the rest of the moves will come afterward
+ * pointer to vector for all moves of the position
+ * the checks and captures will be first and the rest of the moves will come afterward
  */
 std::vector<move_t>* Bitboard::allMoves(){
 	int sideToMove=toMove();
 	std::vector<move_t>* moves = new std::vector<move_t>();
+	std::vector<move_t> captures;
 	std::vector<move_t> nonCaptures;
 	int i=0;
 	if(sideToMove<0) i=6;
@@ -384,37 +385,75 @@ std::vector<move_t>* Bitboard::allMoves(){
 		std::vector<move_t>* pieceMovesPtr=allMoves(i);
 		std::vector<move_t> pieceMoves=*pieceMovesPtr;
 		int j;
-		for(j=0;j<pieceMoves.size()&&pieceMoves[j].getPieceTaken()!='_';j++){
-			//cout<<j<<endl;
+		for(j=0;j<pieceMoves.size()&&pieceMoves[j];j++){
 			moves->push_back(pieceMoves[j]);
+		}
+		for(j++;j<pieceMoves.size()&&pieceMoves[j].getPieceTaken()!='_';j++){
+			//cout<<j<<endl;
+			captures.push_back(pieceMoves[j]);
 		}
 		for(;j<pieceMoves.size();j++){
 			nonCaptures.push_back(pieceMoves[j]);
 		}
 		delete pieceMovesPtr;
 	}
+	for(int j=0;j<captures.size();j++){
+		moves->push_back(captures[j]);
+	}
 	for(int j=0;j<nonCaptures.size();j++){
 		moves->push_back(nonCaptures[j]);
 	}
 	return moves;
 }
-//returns the moves of a piece, with the captures first
+//returns the moves of a piece, with the checks first, then a nullMove, then captures, then rest of the moves
 std::vector<move_t>* Bitboard::allMoves(int pieceIndex){
 	uint64_t first=firstPiece(bitbrds[pieceIndex]);
 	uint64_t rest=restPieces(bitbrds[pieceIndex]);
 	uint64_t own = ownPieces(pieceIndex/6);
 	uint64_t enemy = enemyPieces(pieceIndex/6);
+	int notBlackOrWhite=((pieceIndex/6)+1)%2;
+	uint64_t enemyKing=bitbrds[notBlackOrWhite*6+5];
+	uint64_t checkSquares;
+	switch(pieceIndex%6){
+	case 0:
+		checkSquares=pawnAttacks(enemyKing,0xFFFFFFFFFFFFFFFF,notBlackOrWhite);
+		break;
+	case 1:
+		checkSquares=rookAttacks(enemyKing,notBlackOrWhite);
+		break;
+	case 2:
+		checkSquares=knightAttacks(enemyKing,notBlackOrWhite);
+		break;
+	case 3:
+		checkSquares=bishopAttacks(enemyKing,notBlackOrWhite);
+		break;
+	case 4:
+		checkSquares=queenAttacks(enemyKing,notBlackOrWhite);
+		break;
+	case 5:
+		checkSquares=0;
+	}
 	std::vector<move_t>* moves=new std::vector<move_t>();
+	std::vector<move_t> captures;
 	std::vector<move_t> nonCaptures;
 	while(first){
 		uint64_t pieceMoves=pieceAttacks(pieceIndex,first)&~own;
+		uint64_t checks=pieceMoves&checkSquares;
+		pieceMoves &= ~checks;
 		uint64_t pieceCaptures = enemy&pieceMoves;
 		pieceMoves &= ~enemy;
+		while(checks){
+			uint64_t firstMove=firstPiece(checks);
+			int x=xValue(firstMove);
+			int y=yValue(firstMove);
+			moves->push_back(move_t(xValue(first),yValue(first),x,y,chars[pieceIndex],piece(x,y)));
+			checks=restPieces(checks);
+		}
 		while(pieceCaptures){
 			uint64_t firstMove=firstPiece(pieceCaptures);
 			int x=xValue(firstMove);
 			int y=yValue(firstMove);
-			moves->push_back(move_t(xValue(first),yValue(first),x,y,chars[pieceIndex],piece(x,y)));
+			captures.push_back(move_t(xValue(first),yValue(first),x,y,chars[pieceIndex],piece(x,y)));
 			pieceCaptures=restPieces(pieceCaptures);
 		}
 		while(pieceMoves){
@@ -426,6 +465,10 @@ std::vector<move_t>* Bitboard::allMoves(int pieceIndex){
 		}
 		first=firstPiece(rest);
 		rest=restPieces(rest);
+	}
+	moves->push_back(nullMove);
+	for(int i=0;i<captures.size();i++){
+		moves->push_back(captures[i]);
 	}
 	for(int i=0;i<nonCaptures.size();i++){
 		moves->push_back(nonCaptures[i]);
@@ -990,6 +1033,9 @@ double Bitboard::evaluate(int depth){
 	}
 	delete &moves;
 	return bestEvaluation;
+}
+double Bitboard::quiesce(double alpha, double beta){
+	return 0;
 }
 string Bitboard::tostring(){
 	string s="";

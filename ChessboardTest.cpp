@@ -159,6 +159,33 @@ void testCheck4(){
 	delete movesPtr;
 	delete board;
 }
+void testCheck5(){
+	Bitboard* board=new Bitboard();
+	cout<<board;
+	move_t m1(4,1,4,3,'P','_');
+	move_t m2(3,6,3,4,'p','_');
+	move_t m3(5,0,1,4,'B','_');
+	move_t m4(2,7,3,6,'b','_');
+	move_t m5(1,0,2,2,'N','_');
+	board->move(m1);
+	board->move(m2);
+	/*board->move(m3);
+	board->move(m4);
+	board->move(m5);*/
+	cout<<board;
+	board->print_bitboard(board->pieceAttacks(9));
+	cout<<board->isInCheck(1)<<endl;
+	vector<move_t>* movesPtr=board->allMoves();
+	vector<move_t> moves=*movesPtr;
+	for(int i=0;i<moves.size();i++){
+		//cout<<moves[i].tostring();
+		board->move(moves[i]);
+		cout<<board;
+		board->takeBack();
+	}
+	delete movesPtr;
+	delete board;
+}
 void testDraw(){
 	Bitboard* board=new Bitboard();
 	cout<<board;
@@ -211,6 +238,6 @@ void testDraw2(){
 
 }
 int main(){
-	testDraw2();
+	testCheck5();
 	return 0;
 }
