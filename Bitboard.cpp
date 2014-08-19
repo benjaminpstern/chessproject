@@ -439,6 +439,14 @@ bool Bitboard::move(move_t m){
 	if(m.pieceTaken!=12){
 		bitbrds[m.pieceTaken]&=~(uint64_t)0^((uint64_t)1<<(m.x2*8+m.y2));//turn off the place where the piece got taken
 	}
+	if(m.pieceMoved==0&&m.y2==7){
+		bitbrds[0]&=~((uint64_t)1<<(m.x2*8+m.y2));
+		bitbrds[4]|=((uint64_t)1<<(m.x2*8+m.y2));
+	}
+	if(m.pieceMoved==6&&m.y2==0){
+		bitbrds[6]&=~((uint64_t)1<<(m.x2*8+m.y2));
+		bitbrds[10]|=((uint64_t)1<<(m.x2*8+m.y2));
+	}
 	moveHistory.push_back(m);
 	recalculatePieceAttacks();
 	return true;
@@ -604,17 +612,17 @@ uint64_t Bitboard::kingAttacks(uint64_t brd, int blackOrWhite){
 	//}
 	//cout<<1<<endl;
 	//newSquares&=~(ownPieces(blackOrWhite));
-	int notBlackOrWhite=otherPieces(blackOrWhite);
-	for(int i=notBlackOrWhite;i<notBlackOrWhite+5;i++){//to exclude the enemy king
-		if(i==notBlackOrWhite||i==notBlackOrWhite+1||i==notBlackOrWhite+3||i==notBlackOrWhite+4){
-			if(i==notBlackOrWhite)
-				taboo|=pawnAttacks(bitbrds[i],0xFFFFFFFFFFFFFFFF,notBlackOrWhite);
-			else if(i==notBlackOrWhite+1)
-				taboo|=rookAttacks(bitbrds[i],occ&~brd,notBlackOrWhite);
-			else if(i == notBlackOrWhite+3)
-				taboo|=bishopAttacks(bitbrds[i],occ&~brd,notBlackOrWhite);
-			else if(i==notBlackOrWhite+4)
-				taboo|=queenAttacks(bitbrds[i],occ&~brd,notBlackOrWhite);
+	int others=otherPieces(blackOrWhite);
+	for(int i=others;i<others+5;i++){//to exclude the enemy king
+		if(i==others||i==others+1||i==others+3||i==others+4){
+			if(i==others)
+				taboo|=pawnAttacks(bitbrds[i],0xFFFFFFFFFFFFFFFF,(blackOrWhite+1)%2);
+			else if(i==others+1)
+				taboo|=rookAttacks(bitbrds[i],occ&~brd,(blackOrWhite+1)%2);
+			else if(i == others+3)
+				taboo|=bishopAttacks(bitbrds[i],occ&~brd,(blackOrWhite+1)%2);
+			else if(i==others+4)
+				taboo|=queenAttacks(bitbrds[i],occ&~brd,(blackOrWhite+1)%2);
 		}
 		else{
 			taboo|=pieceAttacks(i);
