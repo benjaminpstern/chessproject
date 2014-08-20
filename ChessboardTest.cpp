@@ -23,11 +23,13 @@ void testMove1(){
 void testBestMoves(){
 	Bitboard* board=new Bitboard();
 	cout<<board;
-	for(int i=0;i<20;i++){
+	for(int i=0;i<3;i++){
 		vector<move_t>* movesPtr=board->nBestMoves(1);
 		vector<move_t> moves=*movesPtr;
+		//cout<<moves.size()<<endl;
 		board->move(moves[0]);
 		move_t m=moves[0];
+		cout<<"moved"<<endl;
 		cout<<board;
 		delete movesPtr;
 	}
@@ -238,6 +240,6 @@ void testDraw2(){
 
 }
 int main(){
-	testCheck5();
+	testBestMoves();
 	return 0;
 }

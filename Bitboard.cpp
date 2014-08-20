@@ -932,40 +932,43 @@ std::vector<move_t>* Bitboard::nBestMoves(int n){
 	nodesSearched=0;
 	int sideToMove=toMove();
 	std::vector<move_t>* bestMovesPtr=new std::vector<move_t>();
-	std::vector<move_t> bestMoves=*bestMovesPtr;
-	for(int i=0;i<n;i++){
-		bestMoves[i].changeEvaluation(40*sideToMove*-1);
-		//cout<<bestMoves[i].getEvaluation()*sideToMove<<endl;
-	}
 	std::vector<move_t>* movesPtr = allMoves();
 	std::vector<move_t> moves = *movesPtr;
-	for(int i=0;moves[i]!=0;i++){
+	for(int i=0;i<n;i++){
+		bestMovesPtr->push_back(moves[i]);
+		(*bestMovesPtr)[i].changeEvaluation(40*sideToMove*-1);
+		//cout<<bestMoves[i].getEvaluation()*sideToMove<<endl;
+	}
+	for(int i=0;i<moves.size();i++){
 		move(moves[i]);
 		nodesSearched++;
 		//cout<<this;
 		move_t m=moves[i];
-		moves[i].changeEvaluation(evaluate(2));
+		moves[i].changeEvaluation(alphaBeta(-100*sideToMove,100*sideToMove,0));
 		takeBack();
 		//cout<<this;
 	}
-	for(int i=0;moves[i];i++){
+	for(int i=0;i<moves.size();i++){
 		//cout<<moves[i].getEvaluation()*sideToMove<<" "<<bestMoves[n-1].getEvaluation()*sideToMove<<endl;
-		if (moves[i].getEvaluation()*sideToMove > bestMoves[n-1].getEvaluation()*sideToMove){
+		if (moves[i].getEvaluation()*sideToMove > (*bestMovesPtr)[n-1].getEvaluation()*sideToMove){
 			int j;
-			for(j=n-1;j>=0&&moves[i].getEvaluation()*sideToMove > bestMoves[j].getEvaluation()*sideToMove;j--){
+			for(j=n-1;j>=0&&moves[i].getEvaluation()*sideToMove > (*bestMovesPtr)[j].getEvaluation()*sideToMove;j--){
 				if(j!=0){
-					bestMoves[j]=bestMoves[j-1];
+					(*bestMovesPtr)[j]=(*bestMovesPtr)[j-1];
 				}
 				else{
-					bestMoves[j]=moves[i];
+					(*bestMovesPtr)[j]=moves[i];
 				}
 				//cout<<j<<endl;
 			}
 		}
 	}
 	delete movesPtr;
-	cout<<"searched "<<nodesSearched<<" nodes"<<endl;
-	cout<<"evaluation is now "<<bestMoves[0].getEvaluation()<<endl;
+	/*cout<<"searched "<<nodesSearched<<" nodes"<<endl;
+	cout<<"evaluation is now "<<(*bestMovesPtr)[0].getEvaluation()<<endl;
+	for(int i=0;i<bestMovesPtr->size();i++){
+		cout<<(*bestMovesPtr)[i].tostring();
+	}*/
 	return bestMovesPtr;
 }
 //evaluates the position nonrecursively
@@ -980,6 +983,7 @@ double Bitboard::evaluate(){
 			evaluation+=.01*numPieces(pieceAttacks(i))*10/pieceValues[i];
 		}
 	}
+	//cout<<this<<evaluation<<endl;
 	return evaluation;
 }
 //evaluates the position up to a minimum depth of depth
@@ -1034,8 +1038,89 @@ double Bitboard::evaluate(int depth){
 	delete &moves;
 	return bestEvaluation;
 }
+/*
+int Quiesce( int alpha, int beta ) {
+    int stand_pat = Evaluate();
+    if( stand_pat >= beta )
+        return beta;
+    if( alpha < stand_pat )
+        alpha = stand_pat;
+ 
+    until( every_capture_has_been_examined )  {
+        MakeCapture();
+        score = -Quiesce( -beta, -alpha );
+        TakeBackMove();
+ 
+        if( score >= beta )
+            return beta;
+        if( score > alpha )
+           alpha = score;
+    }
+    return alpha;
+}
+*/
 double Bitboard::quiesce(double alpha, double beta){
-	return 0;
+	int sideToMove=toMove();
+	double standPat=evaluate();
+	double score;
+	if(standPat*sideToMove>=beta*sideToMove)
+		cout<<"rejected"<<endl;
+		cout<<this;
+		return beta;
+	if(alpha*sideToMove < standPat*sideToMove)
+		alpha=standPat;
+	std::vector<move_t>* movesPtr=allMoves();
+	std::vector<move_t> moves=*movesPtr;
+	for(int i=0;i<moves.size();i++){
+		nodesSearched++;
+		move(moves[i]);
+		if(isCheck()||moves[i].getPieceTaken()!='_'){
+			score = -quiesce( -beta, -alpha );
+		}
+		else{
+			score = standPat;
+		}
+		takeBack();
+		if( score*sideToMove>= beta*sideToMove ){
+			delete movesPtr;
+			return beta;
+		}
+		if( score*sideToMove > alpha*sideToMove )
+			alpha = score;
+
+	}
+	delete movesPtr;
+	return alpha;
+}
+/*int alphaBeta( int alpha, int beta, int depthleft ) {
+   if( depthleft == 0 ) return quiesce( alpha, beta );
+   for ( all moves)  {
+      score = -alphaBeta( -beta, -alpha, depthleft - 1 );
+      if( score >= beta )
+         return beta;   //  fail hard beta-cutoff
+      if( score > alpha )
+         alpha = score; // alpha acts like max in MiniMax
+   }
+   return alpha;
+}*/
+double Bitboard::alphaBeta(double alpha, double beta, int depth){
+	int sideToMove=toMove();
+	if(depth == 0) return quiesce( alpha, beta);
+	double score;
+	std::vector<move_t>* movesPtr=allMoves();
+	std::vector<move_t> moves=*movesPtr;
+	for(int i=0;i<moves.size();i++){
+		nodesSearched++;
+		score=-alphaBeta( -beta, -alpha, depth-1);
+		if(score*sideToMove >= beta*sideToMove){
+			delete movesPtr;
+			return beta;
+		}
+		if( score*sideToMove > alpha*sideToMove )
+			alpha = score;
+	}
+	delete movesPtr;
+	return alpha;
 }
 string Bitboard::tostring(){
 	string s="";
