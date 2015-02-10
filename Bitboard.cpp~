@@ -923,14 +923,12 @@ std::vector<move_t>* Bitboard::nBestMoves(int n){
 	std::vector<move_t>* bestMovesPtr=new std::vector<move_t>();
 	std::vector<move_t> bestMoves=*bestMovesPtr;
 	for(int i=0;i<n;i++){
-		bestMoves.push_back(0);
 		bestMoves[i].changeEvaluation(40*sideToMove*-1);
 		//cout<<bestMoves[i].getEvaluation()*sideToMove<<endl;
 	}
 	std::vector<move_t>* movesPtr = allMoves();
 	std::vector<move_t> moves = *movesPtr;
 	for(int i=0;moves[i]!=0;i++){
-		//cout<<moves[i].tostring();
 		move(moves[i]);
 		nodesSearched++;
 		//cout<<this;
