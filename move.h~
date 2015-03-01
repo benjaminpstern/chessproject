@@ -40,7 +40,7 @@ public:
 		return *this;
 	}
 	bool operator!= (const move_t m) {
-		return (int)(*this) != (int)m;
+		return (uint)(*this) != (uint)m;
 	}
 	uint getx1(){return x1;}//the x position of the original square. From 0 to 7
 	uint gety1(){return y1;}//the y position of the original square. From 0 to 7
