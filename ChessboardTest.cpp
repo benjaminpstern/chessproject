@@ -26,7 +26,10 @@ void testBestMoves(){
 	for(int i=0;i<20;i++){
 		vector<move_t>* movesPtr=board->nBestMoves(1);
 		vector<move_t> moves=*movesPtr;
-		board->move(moves[0]);
+		cout<<"Size of moves is "<< moves.size()<<endl;
+		if(moves[0]){
+			board->move(moves[0]);
+		}
 		move_t m=moves[0];
 		cout<<board;
 		delete movesPtr;
@@ -238,6 +241,7 @@ void testDraw2(){
 
 }
 int main(){
+	cout<<sizeof(move_t)<<" "<<sizeof(int)<<endl;
 	testBestMoves();
 	return 0;
 }

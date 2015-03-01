@@ -33,11 +33,14 @@ public:
 		*(int*)this=x;
 	}
 	operator int(){
-		return *(int*)this;
+		return evaluation | evaluation_sign<<11 | pieceTaken << 12 | pieceMoved << 16 | y2 << 20 | x2 << 23 | y1 << 26 | x1 << 29;
 	}
 	move_t& operator= (const int x) {
 		*(int*)this=x;
 		return *this;
+	}
+	bool operator!= (const move_t m) {
+		return (int)(*this) != (int)m;
 	}
 	uint getx1(){return x1;}//the x position of the original square. From 0 to 7
 	uint gety1(){return y1;}//the y position of the original square. From 0 to 7

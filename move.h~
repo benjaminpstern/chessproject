@@ -33,11 +33,14 @@ public:
 		*(int*)this=x;
 	}
 	operator int(){
-		return *(int*)this;
+		return evaluation | evaluation_sign<<11 | pieceTaken << 12 | pieceMoved << 16 | y2 << 20 | x2 << 23 | y1 << 26 | x1 << 29;
 	}
 	move_t& operator= (const int x) {
 		*(int*)this=x;
 		return *this;
+	}
+	bool operator!= (const move_t m) {
+		return (uint)(*this) != (uint)m;
 	}
 	uint getx1(){return x1;}//the x position of the original square. From 0 to 7
 	uint gety1(){return y1;}//the y position of the original square. From 0 to 7
@@ -49,8 +52,8 @@ public:
 	double getEvaluation(){//Since evaluation must be stored as an int, cast it to a double and divide by 100.
 							//this allows for up to a .01 pawn difference between moves, which is more than enough
 		int eval=evaluation;
-		if(evaluation>30){
-			eval = 1000;
+		if(evaluation>30000){
+			eval = 100000;
 		}
 		if(evaluation_sign)
 			return eval/100.0;
@@ -58,9 +61,9 @@ public:
 			return eval/(-100.0);
 	}
 	void changePieceMoved(char c){pieceMoved=indexPiece(c);};//change the piece moved. 
-	//															rnbqkpRNBQKP Don't put anything silly in there or there will be problems
+	//rnbqkpRNBQKP Don't put anything silly in there or there will be problems
 	void changePieceTaken(char c){pieceTaken=indexPiece(c);};//change the piece taken. 
-	//															rnbqkpRNBQKP_ Don't put anything silly in there or there will be problems
+	//rnbqkpRNBQKP_ Don't put anything silly in there or there will be problems
 	void changeEvaluation(double d){//change the evaluation of the move. This is for use by the engine that is traversing the move tree.
 		if(d<0){
 			d=d*-1;
