@@ -1105,7 +1105,7 @@ double Bitboard::quiesce(double alpha, double beta){
 }*/
 double Bitboard::alphaBeta(double alpha, double beta, int depth){
 	int sideToMove=toMove();
-	if(depth == 0) return quiesce( alpha, beta);
+	if(depth == 0) return quiesce( alpha, beta );
 	double score;
 	std::vector<move_t>* movesPtr=allMoves();
 	std::vector<move_t> moves=*movesPtr;

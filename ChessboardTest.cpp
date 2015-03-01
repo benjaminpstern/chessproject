@@ -239,7 +239,40 @@ void testDraw2(){
 	delete board;
 
 }
+void testDraw3(){
+	int whiteCount = 0;
+	int blackCount = 0;
+	int drawCount = 0;
+	for(int i=0;i<100;i++){
+		srand(time(NULL));
+		Bitboard* board=new Bitboard();
+		cout<<board;
+		int moveno=0;
+		while(!board->isDraw()&&!board->isCheckmate()){
+			vector<move_t>* movesPtr=board->allMoves();
+			board->move((*movesPtr)[rand()%movesPtr->size()]);
+			cout<<board;
+			//cout<<moveno<<endl;
+			moveno++;
+			//board->print_bitboard(board->pieceAttacks(8));
+			delete movesPtr;
+		}
+		if(board->isDraw()){
+			drawCount++;
+		}
+		if(board->isCheckmate()){
+			if(board->isInCheck(0))
+				blackCount++;
+			else
+				whiteCount++;
+		}
+		delete board;
+	}
+	cout<<"White wins: "<< whiteCount<<endl;
+	cout<<"Black wins: "<< blackCount<<endl;
+	cout<<"Draw: "<< drawCount<<endl;
+}
 int main(){
-	testBestMoves();
+	testDraw3();
 	return 0;
 }
