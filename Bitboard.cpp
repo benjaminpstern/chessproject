@@ -921,23 +921,19 @@ std::vector<move_t>* Bitboard::nBestMoves(int n){
 	nodesSearched=0;
 	int sideToMove=toMove();
 	std::vector<move_t>* bestMovesPtr=new std::vector<move_t>();
-	std::vector<move_t> bestMoves = *bestMovesPtr;
 	std::vector<move_t>* movesPtr = allMoves();
 	std::vector<move_t> moves = *movesPtr;
 	for(int i=0;i<n;i++){
-		bestMoves.push_back(nullMove);
-		bestMoves[i].changeEvaluation(40*sideToMove*-1);
-		//cout<<bestMoves[i].getEvaluation()*sideToMove<<endl;
+		(*bestMovesPtr).push_back(nullMove);
+		(*bestMovesPtr)[i].changeEvaluation(40*sideToMove*-1);
+		cout<<(*bestMovesPtr)[i].getEvaluation()*sideToMove<<endl;
 	}
-	for(int i=0;moves[i]!=nullMove;i++){
-		//cout<<moves[i].tostring();
+	for(int i=0;i<moves.size() && moves[i]!=nullMove;i++){
 		move(moves[i]);
 		nodesSearched++;
-		//cout<<this;
 		move_t m=moves[i];
 		moves[i].changeEvaluation(alphaBeta(-100*sideToMove,100*sideToMove,0));
 		takeBack();
-		//cout<<this;
 	}
 	for(int i=0;i<moves.size();i++){
 		//cout<<moves[i].getEvaluation()*sideToMove<<" "<<bestMoves[n-1].getEvaluation()*sideToMove<<endl;

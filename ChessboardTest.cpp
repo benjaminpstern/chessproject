@@ -275,6 +275,8 @@ void testDraw3(){
 	cout<<"Draw: "<< drawCount<<endl;
 }
 int main(){
-	testDraw3();
+	testMove1();
+	cout << "-----------------------------------------------------------" << endl;
+	testBestMoves();
 	return 0;
 }
