@@ -39,7 +39,7 @@ public:
 		*(int*)this=x;
 		return *this;
 	}
-	bool operator!= (const move_t m) {
+	bool operator!= (move_t m) {
 		return (int)(*this) != (int)m;
 	}
 	uint getx1(){return x1;}//the x position of the original square. From 0 to 7

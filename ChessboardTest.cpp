@@ -26,15 +26,10 @@ void testBestMoves(){
 	for(int i=0;i<3;i++){
 		vector<move_t>* movesPtr=board->nBestMoves(1);
 		vector<move_t> moves=*movesPtr;
-<<<<<<< HEAD
-		//cout<<moves.size()<<endl;
-		board->move(moves[0]);
-=======
 		cout<<"Size of moves is "<< moves.size()<<endl;
 		if(moves[0]){
 			board->move(moves[0]);
 		}
->>>>>>> 61237b214580e2d525d40a600c30c00d4bc13f4e
 		move_t m=moves[0];
 		cout<<"moved"<<endl;
 		cout<<board;
@@ -253,12 +248,12 @@ void testDraw3(){
 	for(int i=0;i<100;i++){
 		srand(time(NULL));
 		Bitboard* board=new Bitboard();
-		cout<<board;
+		//cout<<board;
 		int moveno=0;
 		while(!board->isDraw()&&!board->isCheckmate()){
 			vector<move_t>* movesPtr=board->allMoves();
 			board->move((*movesPtr)[rand()%movesPtr->size()]);
-			cout<<board;
+			//cout<<board;
 			//cout<<moveno<<endl;
 			moveno++;
 			//board->print_bitboard(board->pieceAttacks(8));
