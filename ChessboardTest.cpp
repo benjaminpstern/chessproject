@@ -24,7 +24,7 @@ void testBestMoves(){
 	Bitboard* board=new Bitboard();
 	cout<<board;
 	for(int i=0;i<3;i++){
-		vector<move_t>* movesPtr=board->nBestMoves(1);
+		vector<move_t>* movesPtr=board->nBestMoves(1,1);
 		vector<move_t> moves=*movesPtr;
 		cout<<"Size of moves is "<< moves.size()<<endl;
 		if(moves[0]){
@@ -274,9 +274,43 @@ void testDraw3(){
 	cout<<"Black wins: "<< blackCount<<endl;
 	cout<<"Draw: "<< drawCount<<endl;
 }
+void testQuiesce(){
+	Bitboard* board=new Bitboard();
+	cout<<board;
+	for(int i=0;i<50;i++){
+		vector<move_t>* movesPtr=board->nBestMoves(1,0);
+		vector<move_t> moves=*movesPtr;
+		if(moves[0]){
+			board->move(moves[0]);
+		}
+		move_t m=moves[0];
+		cout<<board;
+		delete movesPtr;
+	}
+	delete board;
+}
+void testEvaluate(){
+	Bitboard* board=new Bitboard();
+	move_t m1(4,1,4,3,'P','_');
+	move_t m2(0,6,0,5,'p','_');
+	move_t m3(5,0,0,5,'B','p');
+	move_t m4(0,7,0,5,'r','B');
+	board->move(m1);
+	board->move(m2);
+	board->move(m3);
+	board->move(m4);
+	cout<<board;
+	board->print_bitboard(board->pieceAttacks(9));
+	cout<<board->evaluate()<<endl;
+	for(int i=0;i<4;i++){
+		board->takeBack();
+	}
+	cout<<board;
+	delete board;
+}
 int main(){
 	testMove1();
 	cout << "-----------------------------------------------------------" << endl;
-	testBestMoves();
+	testQuiesce();
 	return 0;
 }

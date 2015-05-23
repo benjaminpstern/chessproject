@@ -113,6 +113,7 @@ public:
 	 * returns a pointer to an array of null-terminated move objects representing all the legal moves in that position
 	 */
 	std::vector<move_t>* allMoves();
+	std::vector<move_t>* checksAndCaptures();
 	/*
 	 * returns a pointer to an array of null-terminated move objects representing all the legal moves that can be made by the piece
 	 * represented by the int piece
@@ -132,8 +133,8 @@ public:
 	//the amount of stuff that's hanging.
 	//If there's a lot of stuff hanging the program should go deeper to look for the right moves
 	int hangingPieces();
-	//should get an array with the n best moves.
-	std::vector<move_t>* nBestMoves(int n);
+	//should get an array with the n best moves, searching with depth of depth
+	std::vector<move_t>* nBestMoves(int n,int depth);
 	//evaluates the position recursively
 	double evaluate();
 	double evaluate(int depth);
@@ -143,6 +144,10 @@ public:
 	//goes to the end of all checks and check evasions and some captures. makes sure the position is stable before 
 	//evaluating it.
 	double quiesce(double alpha, double beta);
+	double quiesceMini(double alpha, double beta,double tolerance);
+	double quiesceMaxi(double alpha, double beta, double tolerance);
+	double mini(double alpha, double beta,int depth);
+	double maxi(double alpha, double beta, int depth);
 	//get the y value of the square represented by the 1 bit in brd
 	int yValue(uint64_t brd){
 		int y=0;

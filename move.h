@@ -33,15 +33,7 @@ public:
 		*(int*)this=x;
 	}
 	operator int(){
-		int i = evaluation; 
-		i |= evaluation_sign<<11;
-		i |= pieceTaken << 12;
-		i |= pieceMoved << 16;
-		i |= y2 << 20;
-		i |= x2 << 23; 
-		i |= y1 << 26;
-		i |= x1 << 29;
-		return i;
+		return *((int*)this);
 	}
 	move_t& operator= (const int x) {
 		*(int*)this=x;
