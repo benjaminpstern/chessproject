@@ -7,6 +7,10 @@ const int pieceValues[num_piece_types]={1,5,3,3,9,40,-1,-5,-3,-3,-9,-40};
 move_t nullMove=0;
 Bitboard::Bitboard(){
 	bitbrds=new uint64_t [num_piece_types];
+	whiteKCastle = -1;
+	whiteQCastle = -1;
+	blackKCastle = -1;
+	blackQCastle = -1;
 	pieceAttackBrds=new uint64_t [num_piece_types];
 	for(int i=0;i<num_piece_types;i++){
 		bitbrds[i]=0;
@@ -501,27 +505,85 @@ std::vector<move_t>* Bitboard::allMoves(int pieceIndex){
 }
 //make the move on the board, return true if successful
 bool Bitboard::move(move_t m){
+	//cout<<m.tostring()<<endl;
 	bitbrds[m.pieceMoved]&=~((uint64_t)1<<(m.x1*8+m.y1));//turn off the bit that the piece moved from
 	bitbrds[m.pieceMoved]|=((uint64_t)1<<(m.x2*8+m.y2));//turn on the place that the piece moved to
 	if(m.pieceTaken!=12){
 		bitbrds[m.pieceTaken]&=~(uint64_t)0^((uint64_t)1<<(m.x2*8+m.y2));//turn off the place where the piece got taken
 	}
-	if(m.pieceMoved==0&&m.y2==7){
-		bitbrds[0]&=~((uint64_t)1<<(m.x2*8+m.y2));
-		bitbrds[4]|=((uint64_t)1<<(m.x2*8+m.y2));
+	if(m.pieceMoved == 5 && m.x1 == 4 && m.x2 == 2){
+		bitbrds[1] |= ((uint64_t)1 << (3 * 8 + 0));
+		bitbrds[1] &= ~((uint64_t)1 << (0 * 8 + 0));
+	}
+	if(m.pieceMoved == 5 && m.x1 == 4 && m.x2 == 6){
+		bitbrds[1] |= ((uint64_t)1 << (5 * 8 + 0));
+		bitbrds[1] &= ~((uint64_t)1 << (7 * 8 + 0));
+	}
+	if(m.pieceMoved == 11 && m.x1 == 4 && m.x2 == 2){
+		bitbrds[7] |= ((uint64_t)1 << (3 * 8 + 7));
+		bitbrds[7] &= ~((uint64_t)1 << (0 * 8 + 7));
+	}
+	if(m.pieceMoved == 11 && m.x1 == 4 && m.x2 == 6){
+		bitbrds[7] |= ((uint64_t)1 << (5 * 8 + 7));
+		bitbrds[7] &= ~((uint64_t)1 << (7 * 8 + 7));
+	}
+	if(m.pieceMoved == 0 && m.y2 == 7){
+		bitbrds[0]&=~((uint64_t)1 << (m.x2 * 8 + m.y2));
+		bitbrds[4]|=((uint64_t)1 << (m.x2 * 8 + m.y2));
 	}
 	if(m.pieceMoved==6&&m.y2==0){
 		bitbrds[6]&=~((uint64_t)1<<(m.x2*8+m.y2));
 		bitbrds[10]|=((uint64_t)1<<(m.x2*8+m.y2));
 	}
 	moveHistory.push_back(m);
+	if(m.pieceMoved == 1 && m.x1 == 0 && m.y1 == 0 && whiteQCastle == -1){
+		whiteQCastle == moveHistory.size();
+	}
+	if(m.pieceMoved == 1 && m.x1 == 7 && m.y1 == 0 && whiteKCastle == -1){
+		whiteKCastle == moveHistory.size();
+	}
+	if(m.pieceMoved == 7 && m.x1 == 0 && m.y1 == 7 && blackQCastle == -1){
+		blackQCastle == moveHistory.size();
+	}
+	if(m.pieceMoved == 7 && m.x1 == 7 && m.y1 == 7 && blackKCastle == -1){
+		blackKCastle == moveHistory.size();
+	}
+	if(m.pieceMoved == 5){
+		if(whiteKCastle == -1){
+			whiteKCastle = moveHistory.size();
+		}
+		if(whiteQCastle == -1){
+			whiteQCastle = moveHistory.size();
+		}
+	}
+	if(m.pieceMoved == 11){
+		if(blackKCastle == -1){
+			blackKCastle = moveHistory.size();
+		}
+		if(blackQCastle == -1){
+			blackQCastle = moveHistory.size();
+		}
+	}
 	recalculatePieceAttacks();
+	//cout<<this<<endl;
 	return true;
 }
 //take back the previous move, return true if successful
 bool Bitboard::takeBack(){
 	move_t m=moveHistory.back();
 	moveHistory.pop_back();
+	if(whiteKCastle > moveHistory.size()){
+		whiteKCastle = -1;
+	}
+	if(whiteQCastle > moveHistory.size()){
+		whiteQCastle = -1;
+	}
+	if(blackKCastle > moveHistory.size()){
+		blackKCastle = -1;
+	}
+	if(blackQCastle > moveHistory.size()){
+		blackQCastle = -1;
+	}
 	bitbrds[m.pieceMoved] |= ((uint64_t)1<<(m.x1*8+m.y1));
 	bitbrds[m.pieceMoved] &= ~((uint64_t)1<<(m.x2*8+m.y2));
 	if(m.pieceMoved == 0 && m.y2 == 7){
@@ -532,6 +594,22 @@ bool Bitboard::takeBack(){
 	}
 	if(m.pieceTaken!=12){
 		bitbrds[m.pieceTaken]|=(uint64_t)0^((uint64_t)1<<(m.x2*8+m.y2));//turn on the place where the piece got taken
+	}
+	if(m.pieceMoved == 5 && m.x1 == 4 && m.x2 == 6){
+		bitbrds[1] &= ~((uint64_t)1 << (5 * 8 + 0));
+		bitbrds[1] |= ((uint64_t)1 << (7 * 8 + 0));
+	}
+	if(m.pieceMoved == 5 && m.x1 == 4 && m.x2 == 2){
+		bitbrds[1] &= ~((uint64_t)1 << (3 * 8 + 0));
+		bitbrds[1] |= ((uint64_t)1 << (0 * 8 + 0));
+	}
+	if(m.pieceMoved == 11 && m.x1 == 4 && m.x2 == 6){
+		bitbrds[7] &= ~((uint64_t)1 << (5 * 8 + 7));
+		bitbrds[7] |= ((uint64_t)1 << (7 * 8 + 7));
+	}
+	if(m.pieceMoved == 11 && m.x1 == 4 && m.x2 == 2){
+		bitbrds[7] &= ~((uint64_t)1 << (3 * 8 + 7));
+		bitbrds[7] |= ((uint64_t)1 << (0 * 8 + 7));
 	}
 
 	recalculatePieceAttacks();
@@ -712,8 +790,12 @@ uint64_t Bitboard::kingAttacks(uint64_t brd, int blackOrWhite){
 	betweenSquares&=(~occ);
 	betweenSquares&=(betweenSquares>>8)|file(6)|file(3);
 	betweenSquares&=(betweenSquares<<8)|file(2)|file(5);
-	newSquares|=(brd>>(2*CHAR_BIT))&mask&betweenSquares;
-	newSquares|=(brd<<(2*CHAR_BIT))&mask&betweenSquares;
+	if(((blackOrWhite == 0 && whiteQCastle == -1) || (blackOrWhite == 1 && blackQCastle == -1)) && !(occ & brd<<(3*CHAR_BIT))){
+		newSquares|=(brd>>(2*CHAR_BIT))&mask&betweenSquares;
+	}
+	if((blackOrWhite == 0 && whiteKCastle == -1)||(blackOrWhite == 1 && blackKCastle == -1) ){
+		newSquares|=(brd<<(2*CHAR_BIT))&mask&betweenSquares;
+	}
 	newSquares&=~taboo;
 	return newSquares;
 }

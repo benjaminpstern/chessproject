@@ -308,9 +308,66 @@ void testEvaluate(){
 	cout<<board;
 	delete board;
 }
+void playTest(){
+	Bitboard* board=new Bitboard();
+	cout<<board;
+	int moveno=0;
+	while(!board->isDraw()&&!board->isCheckmate()){
+		vector<move_t>* movesPtr=board->nBestMoves(1,1);
+		board->move((*movesPtr)[rand()%movesPtr->size()]);
+		cout<<board;
+		//cout<<moveno<<endl;
+		moveno++;
+		//board->print_bitboard(board->pieceAttacks(8));
+		delete movesPtr;
+	}
+	if(board->isDraw()){
+		cout<<"DRAW"<<endl;
+	}
+	if(board->isCheckmate()){
+		if(board->isInCheck(0))
+			cout<<"BLACK WINS"<<endl;
+		else
+			cout<<"WHITE WINS"<<endl;
+	}
+	delete board;
+
+}
+void playTest2(){
+	time_t timePerMove = 5;
+	Bitboard* board=new Bitboard();
+	cout<<board;
+	int moveno=0;
+	while(!board->isDraw()&&!board->isCheckmate()){
+		time_t curTime;
+		time_t timeBeforeMove = time(NULL);
+		int depth = 0;
+		move_t m;
+		while((curTime = time(NULL)) < timeBeforeMove + timePerMove){
+			vector<move_t>* movesPtr=board->nBestMoves(1,depth);
+			m = (*movesPtr)[0];
+			//cout<<moveno<<endl;
+			moveno++;
+			//board->print_bitboard(board->pieceAttacks(8));
+			delete movesPtr;
+			depth++;
+		}
+		board->move(m);
+		cout<<board;
+	}
+	if(board->isDraw()){
+		cout<<"DRAW"<<endl;
+	}
+	if(board->isCheckmate()){
+		if(board->isInCheck(0))
+			cout<<"BLACK WINS"<<endl;
+		else
+			cout<<"WHITE WINS"<<endl;
+	}
+	delete board;
+
+}
 int main(){
-	testMove1();
-	cout << "-----------------------------------------------------------" << endl;
-	testQuiesce();
+	playTest2();
 	return 0;
 }

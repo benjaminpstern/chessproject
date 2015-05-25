@@ -26,6 +26,10 @@ private:
 	uint64_t* pieceAttackBrds;
 	uint64_t squaresToWhiteKing;
 	uint64_t squaresToBlackKing;
+	int whiteKCastle;
+	int whiteQCastle;
+	int blackKCastle;
+	int blackQCastle;
 	//a history of all the moves that have been played.
 	std::vector<move_t> moveHistory;
 	//the number of plies(half moves) that have been played
