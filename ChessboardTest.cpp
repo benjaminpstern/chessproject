@@ -2,6 +2,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string>
 #include <time.h>
 using namespace std;
 void testMove1(){
@@ -367,7 +368,256 @@ void playTest2(){
 	delete board;
 
 }
+move_t moveFromInput(string s, Bitboard* board){
+	move_t nullMove = 0;
+	if(s.size() < 5){
+		return nullMove;
+	}
+	uint x1 = s[0] - 'a';
+	uint y1 = s[1] - '1';
+	uint x2 = s[3] - 'a';
+	uint y2 = s[4] - '1';
+	if(x1 > 7 || y1 > 7 || x2 > 7 || y2 > 7){
+		return nullMove;
+	}
+	move_t m = move_t(x1,y1,x2,y2,board->piece(x1,y1),board->piece(x2,y2));
+	return m;
+}
+void playTest3(){
+	time_t timePerMove = 5;
+	Bitboard* board=new Bitboard();
+	cout<<board;
+	int moveno=0;
+	while(!board->isDraw()&&!board->isCheckmate()){
+		time_t curTime;
+		time_t timeBeforeMove = time(NULL);
+		int depth = 0;
+		move_t m;
+		while((curTime = time(NULL)) < timeBeforeMove + timePerMove){
+			vector<move_t>* movesPtr=board->nBestMoves(1,depth);
+			m = (*movesPtr)[0];
+			//cout<<moveno<<endl;
+			moveno++;
+			//board->print_bitboard(board->pieceAttacks(8));
+			delete movesPtr;
+			depth++;
+		}
+		board->move(m);
+		cout<<board;
+		string playerInput;
+		move_t playerMove = 0;
+		while(!board->isLegal(playerMove)){
+			cin >> playerInput;
+			playerMove = moveFromInput(playerInput,board);
+		}
+		board->move(playerMove);
+		cout<<board;
+		
+	}
+	if(board->isDraw()){
+		cout<<"DRAW"<<endl;
+	}
+	if(board->isCheckmate()){
+		if(board->isInCheck(0))
+			cout<<"BLACK WINS"<<endl;
+		else
+			cout<<"WHITE WINS"<<endl;
+	}
+	delete board;
+
+}
+void bugFix1(){
+	time_t timePerMove = 5;
+	Bitboard* board=new Bitboard();
+	string moveList[] = {"d2-d4","d7-d5","g1-f3","g8-f6","b1-c3","c8-f5",
+		"c1-f4","c7-c6","e2-e3","h7-h6","f1-e2","e7-e6","a2-a4","b8-d7",
+		"h2-h4","f8-b4","a4-a5","b4-a5","e2-d3","f6-e4","d3-e4","f5-e4",
+		"f4-d6","d7-f6","b2-b4","d8-d6","b4-a5","e4-g6","f3-e5","g6-h7",
+		"a5-a6","b7-b6","h4-h5","e8-g8","d1-g4"};
+	for(int i=0;i<35;i++){
+		board->move(moveFromInput(moveList[i],board));
+	}
+	cout<<board;
+	//board->print_bitboard(board->squaresToKing(1));
+	std::vector<move_t>* moves = board->allMoves();
+	for(int i=0;i<moves->size();i++){
+		cout<<(*moves)[i].tostring()<<endl;
+	}
+	board->print_bitboard(board->pieceAttacks(4));
+	board->print_bitboard(board->filePins(1));
+	delete moves;
+	/*int moveno=0;
+	while(!board->isDraw()&&!board->isCheckmate()){
+		time_t curTime;
+		time_t timeBeforeMove = time(NULL);
+		int depth = 0;
+		move_t m;
+		while((curTime = time(NULL)) < timeBeforeMove + timePerMove){
+			vector<move_t>* movesPtr=board->nBestMoves(1,depth);
+			m = (*movesPtr)[0];
+			//cout<<moveno<<endl;
+			moveno++;
+			//board->print_bitboard(board->pieceAttacks(8));
+			delete movesPtr;
+			depth++;
+		}
+		board->move(m);
+		cout<<board;
+		string playerInput;
+		move_t playerMove = 0;
+		while(!board->isLegal(playerMove)){
+			cin >> playerInput;
+			playerMove = moveFromInput(playerInput,board);
+		}
+		board->move(playerMove);
+		cout<<board;
+		
+	}
+	if(board->isDraw()){
+		cout<<"DRAW"<<endl;
+	}
+	if(board->isCheckmate()){
+		if(board->isInCheck(0))
+			cout<<"BLACK WINS"<<endl;
+		else
+			cout<<"WHITE WINS"<<endl;
+	}*/
+	delete board;
+}
+void bugFix2(){
+	time_t timePerMove = 5;
+	Bitboard* board=new Bitboard();
+	string moveList[] = {"d2-d4","d7-d5","g1-f3","g8-f6","b1-c3","c8-f5",
+		"c1-f4","c7-c6","e2-e3","h7-h6","f1-e2","e7-e6","a2-a4","b8-d7",
+		"h2-h4","f8-b4","a4-a5","b4-a5","e2-d3","f6-e4","d3-e4","f5-e4",
+		"f4-d6","d7-f6","b2-b4","d8-d6","b4-a5","e4-g6","f3-e5","g6-h7",
+		"a5-a6","b7-b6","h4-h5","e8-g8","h1-h4","f8-c8"};
+	for(int i=0;i<36;i++){
+		board->move(moveFromInput(moveList[i],board));
+	}
+	cout<<"cancastle" << board->whiteKCastle<<endl;
+	cout<<board;
+	//board->print_bitboard(board->squaresToKing(1));
+	std::vector<move_t>* moves = board->allMoves();
+	for(int i=0;i<moves->size();i++){
+		cout<<(*moves)[i].tostring()<<endl;
+	}
+	board->print_bitboard(board->pieceAttacks(4));
+	board->print_bitboard(board->filePins(1));
+	delete moves;
+	delete board;
+}
+void testGame1(){
+	time_t timePerMove = 5;
+	Bitboard* board=new Bitboard();
+	string moveList[] = {"d2-d4","d7-d5","g1-f3","g8-f6","b1-c3","c8-f5",
+		"c1-f4","c7-c6","e2-e3","h7-h6","f1-e2","e7-e6","a2-a4","b8-d7",
+		"h2-h4","f8-b4","a4-a5","b4-a5","e2-d3","f6-e4","d3-e4","f5-e4",
+		"f4-d6","d7-f6","b2-b4","d8-d6","b4-a5","e4-g6","f3-e5","g6-h7",
+		"a5-a6","b7-b6","h4-h5","e8-g8"};
+	for(int i=0;i<34;i++){
+		board->move(moveFromInput(moveList[i],board));
+	}
+	cout<<board;
+	int moveno=0;
+	while(!board->isDraw()&&!board->isCheckmate()){
+		time_t curTime;
+		time_t timeBeforeMove = time(NULL);
+		int depth = 0;
+		move_t m;
+		while((curTime = time(NULL)) < timeBeforeMove + timePerMove){
+			vector<move_t>* movesPtr=board->nBestMoves(1,depth);
+			m = (*movesPtr)[0];
+			//cout<<moveno<<endl;
+			moveno++;
+			//board->print_bitboard(board->pieceAttacks(8));
+			delete movesPtr;
+			depth++;
+		}
+		board->move(m);
+		cout<<board;
+		string playerInput;
+		move_t playerMove = 0;
+		while(!board->isLegal(playerMove)){
+			cin >> playerInput;
+			playerMove = moveFromInput(playerInput,board);
+		}
+		board->move(playerMove);
+		cout<<board;
+		
+	}
+	if(board->isDraw()){
+		cout<<"DRAW"<<endl;
+	}
+	if(board->isCheckmate()){
+		if(board->isInCheck(0))
+			cout<<"BLACK WINS"<<endl;
+		else
+			cout<<"WHITE WINS"<<endl;
+	}
+	delete board;
+}
+void testEndgame(){
+	time_t timePerMove = 5;
+	Bitboard* board=new Bitboard();
+	/*string moveList[] = {"d2-d4","d7-d5","g1-f3","g8-f6","b1-c3","c8-f5",
+		"c1-f4","c7-c6","e2-e3","h7-h6","f1-e2","e7-e6","a2-a4","b8-d7",
+		"h2-h4","f8-b4","a4-a5","b4-a5","e2-d3","f6-e4","d3-e4","f5-e4",
+		"f4-d6","d7-f6","b2-b4","d8-d6","b4-a5","e4-g6","f3-e5","g6-h7",
+		"a5-a6","b7-b6","h4-h5","e8-g8"};
+	for(int i=0;i<34;i++){
+		board->move(moveFromInput(moveList[i],board));
+	}*/
+	for(int i=0;i<12;i++){
+		if(i == 4||i==5||i==11){
+			continue;
+		}
+		board->bitbrds[i] = 0;
+	}
+	board->whiteKCastle = -2;
+	board->whiteQCastle = -2;
+	board->blackKCastle = -2;
+	board->blackQCastle = -2;
+	cout<<board;
+	int moveno=0;
+	while(!board->isDraw()&&!board->isCheckmate()){
+		time_t curTime;
+		time_t timeBeforeMove = time(NULL);
+		int depth = 0;
+		move_t m;
+		while((curTime = time(NULL)) < timeBeforeMove + timePerMove){
+			vector<move_t>* movesPtr=board->nBestMoves(1,depth);
+			m = (*movesPtr)[0];
+			//cout<<moveno<<endl;
+			moveno++;
+			//board->print_bitboard(board->pieceAttacks(8));
+			delete movesPtr;
+			depth++;
+		}
+		board->move(m);
+		cout<<board;
+		string playerInput;
+		move_t playerMove = 0;
+		while(!board->isLegal(playerMove)){
+			cin >> playerInput;
+			playerMove = moveFromInput(playerInput,board);
+		}
+		board->move(playerMove);
+		cout<<board;
+		
+	}
+	if(board->isDraw()){
+		cout<<"DRAW"<<endl;
+	}
+	if(board->isCheckmate()){
+		if(board->isInCheck(0))
+			cout<<"BLACK WINS"<<endl;
+		else
+			cout<<"WHITE WINS"<<endl;
+	}
+	delete board;
+}
 int main(){
-	playTest2();
+	testEndgame();
 	return 0;
 }

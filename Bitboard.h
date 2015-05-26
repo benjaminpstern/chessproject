@@ -18,7 +18,7 @@ const uint64_t centralSquares = 0x0000001818000000;
  * where (0,0) is the least significant bit
  */
 class Bitboard : public Chessboard{
-private:
+public:
 	//a uint64_t is 8 bytes, enough for 64 squares.
 	//this array should be of size 12.
 	uint64_t* bitbrds;
@@ -26,10 +26,6 @@ private:
 	uint64_t* pieceAttackBrds;
 	uint64_t squaresToWhiteKing;
 	uint64_t squaresToBlackKing;
-	int whiteKCastle;
-	int whiteQCastle;
-	int blackKCastle;
-	int blackQCastle;
 	//a history of all the moves that have been played.
 	std::vector<move_t> moveHistory;
 	//the number of plies(half moves) that have been played
@@ -83,12 +79,16 @@ private:
 	int otherPieces(int blackOrWhite){
 		return ((blackOrWhite+1)%2)*6;
 	}
-public:
+//public:
 	//constructor. Initializes the board to be completely empty.
 	Bitboard();
 	//returns 1 if the square is occupied, 0 if not,
 	// and -1 if x or y are out of bounds
 	int isOccupied(uint x, uint y);
+	int whiteKCastle;
+	int whiteQCastle;
+	int blackKCastle;
+	int blackQCastle;
 	//occupies the square at (x,y) with the piece indicated by the char piece
 	//takes the characters KQRNBPkqrnbp
 	//returns -1 if x or y are out of bounds

@@ -227,7 +227,10 @@ uint64_t Bitboard::pieceAttacks(int pieceIndex, uint64_t brd){
 }
 //return true if the move is legal, false otherwise
 bool Bitboard::isLegal(move_t m){
-	uint64_t newBoard=bitbrds[m.pieceMoved]&((uint64_t)1<<(m.x1*8+m.y1));
+	if(m == nullMove) {
+		return false;
+	}
+	//uint64_t newBoard=bitbrds[m.pieceMoved]&((uint64_t)1<<(m.x1*8+m.y1));
 	return ((uint64_t)1<<(m.x2*8+m.y2))&pieceAttacks(m.pieceMoved)&~ownPieces(m.pieceMoved/6);
 }
 bool Bitboard::isCheck(){
@@ -537,16 +540,16 @@ bool Bitboard::move(move_t m){
 	}
 	moveHistory.push_back(m);
 	if(m.pieceMoved == 1 && m.x1 == 0 && m.y1 == 0 && whiteQCastle == -1){
-		whiteQCastle == moveHistory.size();
+		whiteQCastle = moveHistory.size();
 	}
 	if(m.pieceMoved == 1 && m.x1 == 7 && m.y1 == 0 && whiteKCastle == -1){
-		whiteKCastle == moveHistory.size();
+		whiteKCastle = moveHistory.size();
 	}
 	if(m.pieceMoved == 7 && m.x1 == 0 && m.y1 == 7 && blackQCastle == -1){
-		blackQCastle == moveHistory.size();
+		blackQCastle = moveHistory.size();
 	}
 	if(m.pieceMoved == 7 && m.x1 == 7 && m.y1 == 7 && blackKCastle == -1){
-		blackKCastle == moveHistory.size();
+		blackKCastle = moveHistory.size();
 	}
 	if(m.pieceMoved == 5){
 		if(whiteKCastle == -1){
@@ -837,7 +840,23 @@ uint64_t Bitboard::rookAttacks(uint64_t brd, uint64_t occ, int blackOrWhite){
 		rankAttacks|=(((occ&rookRank)-(rook<<1))^occ)&rookRank;
 		rankAttacks|=((occ-(rook<<1))^reverse(reverse(occ&rookRank)-(reverse(rook)<<1)))&rookRank;
 	}
-	uint64_t fileAttacks=((occ-(brd<<1))^reverse(reverse(occ)-(reverse(brd)<<1)))&filesOccupied;
+	rooks = brd;
+	uint64_t fileAttacks = 0;
+	while(rooks){
+		uint64_t rookFile = file(0);
+		uint64_t rook = firstPiece(rooks);
+		rooks = restPieces(rooks);
+		while(!(rookFile&rook)){
+			rookFile<<=8;
+		}
+		fileAttacks |= ((occ-(rook<<1))^reverse(reverse(occ)-(reverse(rook)<<1)))&rookFile;
+	}
+	/*if(occ != occupancySet()){
+		cout<<"Occ"<<endl;
+		print_bitboard(occ);
+		cout<<"file attacks"<<endl;
+		print_bitboard(fileAttacks);
+	}*/
 	newSquares|=fileAttacks;
 	newSquares|=rankAttacks;
 	uint64_t king=bitbrds[6*blackOrWhite+5];
