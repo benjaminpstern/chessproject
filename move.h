@@ -42,6 +42,26 @@ public:
 	bool operator!= (move_t m) {
 		return (int)(*this) != (int)m;
 	}
+	static bool captureComp(move_t m1, move_t m2){
+		char m1Moved = m1.pieceMoved;
+		char m2Moved = m2.pieceMoved;
+		char m1Taken = m1.pieceTaken;
+		char m2Taken = m2.pieceTaken;
+		int pieceValues[num_piece_types] = {1,5,3,3,9,30,1,5,3,3,9,30,0};
+		return (pieceValues[m1Taken]-pieceValues[m1Moved])>(pieceValues[m2Taken]-pieceValues[m2Moved]);
+	}
+	static bool centralComp(move_t m1, move_t m2){
+		int m1BeforeX = m1.x1 - 4;
+		int m1BeforeY = m1.y1 - 4;
+		int m2BeforeX = m2.x1 - 4;
+		int m2BeforeY = m2.y1 - 4;
+		int m1AfterX = m1.x2 - 4;
+		int m1AfterY = m1.y2 - 4;
+		int m2AfterX = m2.x2 - 4;
+		int m2AfterY = m2.y2 - 4;
+		return ((m1AfterX*m1AfterX+m1AfterY*m1AfterY)-(m1BeforeX*m1BeforeX + m1BeforeY*m1BeforeY))
+		>((m2AfterX*m2AfterX+m2AfterY*m2AfterY)-(m2BeforeX*m2BeforeX + m2BeforeY*m2BeforeY));
+	}
 	uint getx1(){return x1;}//the x position of the original square. From 0 to 7
 	uint gety1(){return y1;}//the y position of the original square. From 0 to 7
 	uint getx2(){return x2;}//the x position of the new square. From 0 to 7

@@ -391,9 +391,10 @@ void playTest3(){
 	while(!board->isDraw()&&!board->isCheckmate()){
 		time_t curTime;
 		time_t timeBeforeMove = time(NULL);
-		int depth = 0;
+		int depth = 2;
 		move_t m;
 		while((curTime = time(NULL)) < timeBeforeMove + timePerMove){
+			cout<<depth<<endl;
 			vector<move_t>* movesPtr=board->nBestMoves(1,depth);
 			m = (*movesPtr)[0];
 			//cout<<moveno<<endl;
@@ -586,6 +587,68 @@ void testEndgame(){
 		int depth = 0;
 		move_t m;
 		while((curTime = time(NULL)) < timeBeforeMove + timePerMove){
+			cout<<depth<<endl;
+			vector<move_t>* movesPtr=board->nBestMoves(1,depth);
+			m = (*movesPtr)[0];
+			//cout<<moveno<<endl;
+			moveno++;
+			//board->print_bitboard(board->pieceAttacks(8));
+			delete movesPtr;
+			depth++;
+		}
+		board->move(m);
+		cout<<board;
+		string playerInput;
+		move_t playerMove = 0;
+		while(!board->isLegal(playerMove)){
+			cin >> playerInput;
+			playerMove = moveFromInput(playerInput,board);
+		}
+		board->move(playerMove);
+		cout<<board;
+		
+	}
+	if(board->isDraw()){
+		cout<<"DRAW"<<endl;
+	}
+	if(board->isCheckmate()){
+		if(board->isInCheck(0))
+			cout<<"BLACK WINS"<<endl;
+		else
+			cout<<"WHITE WINS"<<endl;
+	}
+	delete board;
+}
+void testEndgame2(){
+	time_t timePerMove = 5;
+	Bitboard* board=new Bitboard();
+	for(int i=0;i<12;i++){
+		if(i == 1||i==5||i==11){
+			continue;
+		}
+		board->bitbrds[i] = 0;
+	}
+	board->bitbrds[1] = 1;
+	board->whiteKCastle = -2;
+	board->whiteQCastle = -2;
+	board->blackKCastle = -2;
+	board->blackQCastle = -2;
+	/*string moveList[] = {"a1-b1","e8-f8","b1-a1","f8-e8","a1-b1",
+	"e8-f8","b1-a1","f8-e8","a1-b1","e8-f8","b1-a1","f8-e8","a1-b1",
+	"e8-f8","b1-a1","f8-e8","a1-b1","e8-f8","b1-a1","f8-e8","a1-b1","e8-f8","b1-a1",
+	"f8-e8","a1-b1","e8-f8","b1-a1","f8-e8","a1-b1","e8-f8","b1-a1","f8-e8","a1-b1",
+	"e8-f8","b1-a1","f8-e8","a1-b1","e8-f8","b1-a1","f8-e8"};
+	for(int i=0;i<40;i++){
+		board->move(moveFromInput(moveList[i],board));
+	}*/
+	cout<<board;
+	int moveno=0;
+	while(!board->isDraw()&&!board->isCheckmate()){
+		time_t curTime;
+		time_t timeBeforeMove = time(NULL);
+		int depth = 0;
+		move_t m;
+		while((curTime = time(NULL)) < timeBeforeMove + timePerMove){
 			vector<move_t>* movesPtr=board->nBestMoves(1,depth);
 			m = (*movesPtr)[0];
 			//cout<<moveno<<endl;
@@ -618,6 +681,6 @@ void testEndgame(){
 	delete board;
 }
 int main(){
-	testEndgame();
+	testGame1();
 	return 0;
 }

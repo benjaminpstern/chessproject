@@ -388,12 +388,17 @@ std::vector<move_t>* Bitboard::allMoves(){
 	for(;i<max;i++){
 		std::vector<move_t>* pieceMovesPtr=allMoves(i);
 		std::vector<move_t> pieceMoves=*pieceMovesPtr;
-		int j;
-		for(j=0;j<pieceMoves.size()&&pieceMoves[j];j++){
+		int j=0;
+		/*for(j=0;j<pieceMoves.size()&&pieceMoves[j]!=nullMove;j++){
 			moves->push_back(pieceMoves[j]);
-		}
+		}*/
 		for(j++;j<pieceMoves.size()&&pieceMoves[j].getPieceTaken()!='_';j++){
 			captures.push_back(pieceMoves[j]);
+		}
+		std::sort(pieceMoves.begin()+1,pieceMoves.begin()+j-1,nullMove.captureComp);
+		for(int k=0;k<j;k++){
+			cout<<k<<endl;
+			cout<<(*moves)[k].tostring();
 		}
 		for(;j<pieceMoves.size();j++){
 			nonCaptures.push_back(pieceMoves[j]);
@@ -443,7 +448,7 @@ std::vector<move_t>* Bitboard::allMoves(int pieceIndex){
 	uint64_t own = ownPieces(pieceIndex/6);
 	uint64_t enemy = enemyPieces(pieceIndex/6);
 	int notBlackOrWhite=((pieceIndex/6)+1)%2;
-	uint64_t enemyKing=bitbrds[notBlackOrWhite*6+5];
+	/*uint64_t enemyKing=bitbrds[notBlackOrWhite*6+5];
 	uint64_t checkSquares;
 	switch(pieceIndex%6){
 	case 0:
@@ -463,23 +468,23 @@ std::vector<move_t>* Bitboard::allMoves(int pieceIndex){
 		break;
 	case 5:
 		checkSquares=0;
-	}
+	}*/
 	std::vector<move_t>* moves=new std::vector<move_t>();
 	std::vector<move_t> captures;
 	std::vector<move_t> nonCaptures;
 	while(first){
 		uint64_t pieceMoves=pieceAttacks(pieceIndex,first)&~own;
-		uint64_t checks=pieceMoves&checkSquares;
-		pieceMoves &= ~checks;
+		//uint64_t checks=pieceMoves&checkSquares;
+		//pieceMoves &= ~checks;
 		uint64_t pieceCaptures = enemy&pieceMoves;
 		pieceMoves &= ~enemy;
-		while(checks){
+		/*while(checks){
 			uint64_t firstMove=firstPiece(checks);
 			int x=xValue(firstMove);
 			int y=yValue(firstMove);
 			moves->push_back(move_t(xValue(first),yValue(first),x,y,chars[pieceIndex],piece(x,y)));
 			checks=restPieces(checks);
-		}
+		}*/
 		while(pieceCaptures){
 			uint64_t firstMove=firstPiece(pieceCaptures);
 			int x=xValue(firstMove);
@@ -509,6 +514,10 @@ std::vector<move_t>* Bitboard::allMoves(int pieceIndex){
 //make the move on the board, return true if successful
 bool Bitboard::move(move_t m){
 	//cout<<m.tostring()<<endl;
+	if(m == nullMove){
+		moveHistory.push_back(m);
+		return true;
+	}
 	bitbrds[m.pieceMoved]&=~((uint64_t)1<<(m.x1*8+m.y1));//turn off the bit that the piece moved from
 	bitbrds[m.pieceMoved]|=((uint64_t)1<<(m.x2*8+m.y2));//turn on the place that the piece moved to
 	if(m.pieceTaken!=12){
@@ -575,16 +584,19 @@ bool Bitboard::move(move_t m){
 bool Bitboard::takeBack(){
 	move_t m=moveHistory.back();
 	moveHistory.pop_back();
-	if(whiteKCastle > moveHistory.size()){
+	if(m == nullMove){
+		return true;
+	}
+	if(whiteKCastle > (int)moveHistory.size()){
 		whiteKCastle = -1;
 	}
-	if(whiteQCastle > moveHistory.size()){
+	if(whiteQCastle > (int)moveHistory.size()){
 		whiteQCastle = -1;
 	}
-	if(blackKCastle > moveHistory.size()){
+	if(blackKCastle > (int)moveHistory.size()){
 		blackKCastle = -1;
 	}
-	if(blackQCastle > moveHistory.size()){
+	if(blackQCastle > (int)moveHistory.size()){
 		blackQCastle = -1;
 	}
 	bitbrds[m.pieceMoved] |= ((uint64_t)1<<(m.x1*8+m.y1));
@@ -754,8 +766,8 @@ uint64_t Bitboard::kingAttacks(uint64_t brd, int blackOrWhite){
 	uint64_t occ=occupancySet();
 	newSquares|=(brd<<1)&notFirstRank;
 	newSquares|=(brd>>1)&notLastRank;
-	newSquares|=(brd<<7)&notLastRank;
 	newSquares|=(brd>>7)&notFirstRank;
+	newSquares|=(brd<<7)&notLastRank;
 	newSquares|=(brd<<8);
 	newSquares|=(brd>>8);
 	newSquares|=(brd<<9)&notFirstRank;
@@ -1189,15 +1201,30 @@ double Bitboard::quiesceMini(double alpha, double beta, double tolerance){
 	if(isCheckmate()){
 		return 30;
 	}
-	if(hangingPieces() < tolerance){
+	/*if(hangingPieces() < tolerance){
 		if(movesPtr->size() == 0){
 			return standPat;
 		}
+	}*/
+	if(!isCheck()){ 
+		move(nullMove);
+		if(movesPtr->size() > 10 && quiesceMaxi(alpha,beta,tolerance) <= alpha){
+			takeBack();
+			return alpha;
+		}
+		takeBack();
 	}
 	int i;
 	for(i=0;i<movesPtr->size();i++){
+		if((*movesPtr)[i].getPieceTaken() == '_'){
+			continue;
+		}
 		move((*movesPtr)[i]);
 		score = quiesceMaxi(alpha,beta,tolerance);
+		if(score == 30 || score == -30){
+			takeBack();
+			return score;
+		}
 		if(score <= alpha){
 			takeBack();
 			delete movesPtr;
@@ -1207,6 +1234,9 @@ double Bitboard::quiesceMini(double alpha, double beta, double tolerance){
 		takeBack();
 		if(score < beta){
 			beta = score;
+			if( score <= alpha ){
+				break;
+			}
 		}
 	}
 	/*if(hangingPieces() > tolerance){
@@ -1245,16 +1275,30 @@ double Bitboard::quiesceMaxi(double alpha, double beta, double tolerance){
 	if(isCheckmate()){
 		return -30;
 	}
-	if(hangingPieces() < tolerance){
+	/*if(hangingPieces() < tolerance){
 		if(movesPtr->size() == 0){
 			return standPat;
 		}
+	}*/
+	if(!isCheck()){ 
+		move(nullMove);
+		if(movesPtr->size() > 10 && quiesceMini(alpha,beta,tolerance) >= beta){
+			takeBack();
+			return alpha;
+		}
+		takeBack();
 	}
-	
 	int i;
 	for(i=0;i<movesPtr->size();i++){
+		if((*movesPtr)[i].getPieceTaken() == '_'){
+			continue;
+		}
 		move((*movesPtr)[i]);
 		score = quiesceMini(alpha,beta,tolerance);
+		if(score == 30 || score == -30){
+			takeBack();
+			return score;
+		}
 		if(score >= beta){
 			takeBack();
 			delete movesPtr;
@@ -1264,6 +1308,9 @@ double Bitboard::quiesceMaxi(double alpha, double beta, double tolerance){
 		takeBack();
 		if(score > alpha){
 			alpha = score;
+			if( score >= beta ){
+				break;
+			}
 		}
 	}
 	/*if(hangingPieces() > tolerance){
@@ -1323,9 +1370,21 @@ double Bitboard::mini(double alpha, double beta, int depth){
 	if(depth < 1){
 		return quiesce(alpha, beta);
 	}
+	if(!isCheck()){ 
+		move(nullMove);
+		if(movesPtr->size() > 10 && maxi(alpha,beta,depth-1) <= alpha){
+			takeBack();
+			return alpha;
+		}
+		takeBack();
+	}
 	for(int i=0;i<movesPtr->size();i++){
 		move((*movesPtr)[i]);
 		score = maxi(alpha,beta,depth-1);
+		if(score == 30 || score == -30){
+			takeBack();
+			return score;
+		}
 		if(score <= alpha){
 			takeBack();
 			delete movesPtr;
@@ -1351,10 +1410,22 @@ double Bitboard::maxi(double alpha, double beta, int depth){
 	if(depth < 1){
 		return quiesce(alpha, beta);
 	}
+	if(!isCheck()){ 
+		move(nullMove);
+		if(movesPtr->size() > 10 && mini(alpha,beta,depth-1) >= beta){
+			takeBack();
+			return alpha;
+		}
+		takeBack();
+	}
 	for(int i=0;i<movesPtr->size();i++){
 		if((*movesPtr)[i] == 0) continue;
 		move((*movesPtr)[i]);
 		score = mini(alpha,beta,depth-1);
+		if(score == 30 || score == -30){
+			takeBack();
+			return score;
+		}
 		if(score >= beta){
 			takeBack();
 			delete movesPtr;

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <algorithm>
 #include "Chessboard.h"
 const uint64_t notFirstRank = 0xfefefefefefefefe; // ~0x0101010101010101
 const uint64_t notLastRank = 0x7f7f7f7f7f7f7f7f; // ~0x8080808080808080
