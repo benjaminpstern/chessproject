@@ -9,4 +9,4 @@ board: Chessboard.h Chessboard.cpp Bitboard.o move.o
 	g++ -c -g Chessboard.cpp
 	g++ -g -o ChessboardTest ChessboardTest.cpp Chessboard.o Bitboard.o move.o
 clean:
-	rm -f Chessboard.o ChessboardTest Bitboard.o move.o
+	rm -f Chessboard.o ChessboardTest Bitboard.o move.o ChessboardTest.exe movetest movetest.exe

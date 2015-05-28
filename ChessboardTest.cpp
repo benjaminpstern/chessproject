@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string>
 #include <time.h>
+#include <ctime>
 using namespace std;
 void testMove1(){
 	Bitboard* board=new Bitboard();
@@ -391,7 +392,7 @@ void playTest3(){
 	while(!board->isDraw()&&!board->isCheckmate()){
 		time_t curTime;
 		time_t timeBeforeMove = time(NULL);
-		int depth = 2;
+		int depth = 0;
 		move_t m;
 		while((curTime = time(NULL)) < timeBeforeMove + timePerMove){
 			cout<<depth<<endl;
@@ -680,7 +681,24 @@ void testEndgame2(){
 	}
 	delete board;
 }
+void testPerformance1(){
+	time_t timePerMove = 5;
+	Bitboard* board=new Bitboard();
+	string moveList[] = {"g1-f3","g8-f6","f3-g1","f6-g8"};
+	for(int times = 1;times < 20;times++){
+		clock_t ticks = clock();
+		for(int i=0;i<200*times;i++){
+			for(int j=0;j<4;j++){
+				board->move(moveFromInput(moveList[j],board));
+			}
+		}
+		cout<<((double)(clock() - ticks))/(800*times)<<endl;
+	}
+	
+	cout<<board;
+	delete board;
+}
 int main(){
-	testGame1();
+	testEndgame();
 	return 0;
 }

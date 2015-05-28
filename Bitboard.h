@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <algorithm>
+#include <ctime>
 #include "Chessboard.h"
 const uint64_t notFirstRank = 0xfefefefefefefefe; // ~0x0101010101010101
 const uint64_t notLastRank = 0x7f7f7f7f7f7f7f7f; // ~0x8080808080808080
@@ -118,7 +119,7 @@ public:
 	 * returns a pointer to an array of null-terminated move objects representing all the legal moves in that position
 	 */
 	std::vector<move_t>* allMoves();
-	std::vector<move_t>* checksAndCaptures();
+	std::vector<move_t>* allCaptures();
 	/*
 	 * returns a pointer to an array of null-terminated move objects representing all the legal moves that can be made by the piece
 	 * represented by the int piece
@@ -140,12 +141,15 @@ public:
 	int hangingPieces();
 	//should get an array with the n best moves, searching with depth of depth
 	std::vector<move_t>* nBestMoves(int n,int depth);
+	//uses the alotted time to search the position
+	move_t bestMove(time_t time);
 	//evaluates the position recursively
 	double evaluate();
 	double evaluate(int depth);
 	double evaluate(int depth, int prevHanging);
 	//return the value for the evaluation of the position using the alpha beta pruning evaluation
 	double alphaBeta(double alpha, double beta, int depth);
+	double alphaBeta(double alpha, double beta, int depth, time_t doneBy);
 	//goes to the end of all checks and check evasions and some captures. makes sure the position is stable before 
 	//evaluating it.
 	double quiesce(double alpha, double beta);
@@ -153,6 +157,8 @@ public:
 	double quiesceMaxi(double alpha, double beta, double tolerance);
 	double mini(double alpha, double beta,int depth);
 	double maxi(double alpha, double beta, int depth);
+	double mini(double alpha, double beta,int depth, time_t doneBy);
+	double maxi(double alpha, double beta, int depth, time_t doneBy);
 	//get the y value of the square represented by the 1 bit in brd
 	int yValue(uint64_t brd){
 		int y=0;

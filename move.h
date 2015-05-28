@@ -62,10 +62,18 @@ public:
 		return ((m1AfterX*m1AfterX+m1AfterY*m1AfterY)-(m1BeforeX*m1BeforeX + m1BeforeY*m1BeforeY))
 		>((m2AfterX*m2AfterX+m2AfterY*m2AfterY)-(m2BeforeX*m2BeforeX + m2BeforeY*m2BeforeY));
 	}
+	static bool evalCompMax(move_t m1, move_t m2){
+		return m1.getEvaluation() > m2.getEvaluation();
+	}
+	static bool evalCompMin(move_t m1, move_t m2){
+		return m1.getEvaluation() < m2.getEvaluation();
+	}
 	uint getx1(){return x1;}//the x position of the original square. From 0 to 7
 	uint gety1(){return y1;}//the y position of the original square. From 0 to 7
 	uint getx2(){return x2;}//the x position of the new square. From 0 to 7
 	uint gety2(){return y2;}//the y position of the new square. From 0 to 7
+	uint getPieceMovedInt(){return pieceMoved;}
+	uint getPieceTakenInt(){return pieceTaken;}
 	char getPieceMoved(){return piecemap[pieceMoved];}//the character representing the piece that was moved. rnbqkpRNBQKP
 	char getPieceTaken(){return piecemap[pieceTaken];}//the character representing the piece that was taken. 
 	//													If none was taken then '_' rnbqkpRNBQKP_
@@ -88,11 +96,11 @@ public:
 		if(d<0){
 			d=d*-1;
 			evaluation_sign=false;
-			evaluation=(int)(d*100);
+			evaluation=(unsigned int)(d*100);
 		}
 		else
 			evaluation_sign=true;
-			evaluation=(int)(d*100);
+			evaluation=(unsigned int)(d*100);
 	}
 	bool isCapture(){
 		return pieceTaken!=12;
